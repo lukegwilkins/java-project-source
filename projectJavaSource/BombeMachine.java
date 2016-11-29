@@ -104,31 +104,97 @@ public class BombeMachine{
 		//System.out.println(thirdRotor.getCharOnTop());
 		
 		ArrayList<char[]> encryptions = new ArrayList<char[]>();
+		int noOfLetters=0;
 		//scrambler.setCrackingMode(false);
 		String[] closureArray = closure.split(",");
 		for(int i=1;i<closureArray.length;i+=2){
 			//System.out.println(closureArray[i]);
+			//we rotate then encrypt, so you don't encrypt with the initial position you encrypt with the position after
 			char position = (char)(((int)Character.toLowerCase(positions.charAt(2))%97+Integer.parseInt(closureArray[i]))%26 + 97);
 			//System.out.println(position);
 			firstRotor.setPosition(position);
 			
 			encryptions.add(scrambler.encryptAlphabet());
 			//System.out.println(firstRotor.getCharOnTop());
+			noOfLetters+=1;
 			System.out.println(new String(scrambler.encryptAlphabet()));
 		}
+		//System.out.println(noOfLetters);
 		ArrayList<Character> alphabet=new ArrayList<Character>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'));
 		while(!alphabet.isEmpty()){
 			int startWire = (int)alphabet.get(0)-97;
 			int wire = startWire;
-			String out = ""+(char)(97+wire);
+			String loop = ""+(char)(97+wire);
 			do{
 				for(int j=0; j<encryptions.size(); j++){
-					out+=encryptions.get(j)[wire];
+					loop+=encryptions.get(j)[wire];
 					wire = (int)encryptions.get(j)[wire]-97;
 				}
 				alphabet.remove((Character)(char)(wire+97));
 			}while(wire!=startWire);
-			System.out.println("Plugboard settings loop:\n"+out);
+			//System.out.println(out.length());
+			if(loop.length()==noOfLetters+1){
+				String settings;
+				HashMap<Character,Character> plugboardMapping = new HashMap<Character,Character>();
+				boolean validSettings=true;
+				
+				if((int)(loop.charAt(0))<(int)(closureArray[0].charAt(0))){
+					
+					settings=loop.charAt(0)+"/"+closureArray[0];
+					plugboardMapping.put(loop.charAt(0),closureArray[0].charAt(0));
+				
+				}
+				else{
+					
+					settings=closureArray[0]+"/"+loop.charAt(0);
+					plugboardMapping.put(closureArray[0].charAt(0),loop.charAt(0));
+				
+				}
+				
+				int i = 1;
+				while(i<loop.length()-1&&validSettings){
+					if((int)(loop.charAt(i))<(int)(closureArray[2*i].charAt(0))){
+						
+						if(plugboardMapping.containsKey(loop.charAt(i))){
+							
+							if(plugboardMapping.get(loop.charAt(i))!=closureArray[2*i].charAt(0)){
+								validSettings=false;
+							}
+							
+						}
+						else{
+							
+							settings+=", "+loop.charAt(i)+"/"+closureArray[2*i];
+							plugboardMapping.put(loop.charAt(i),closureArray[2*i].charAt(0));
+							
+						}
+						
+					}
+					else{
+						
+						if(plugboardMapping.containsKey(closureArray[2*i].charAt(0))){
+							
+							if(plugboardMapping.get(closureArray[2*i].charAt(0))!=loop.charAt(i)){
+								validSettings=false;
+							}
+							
+						}
+						else{
+							
+							settings+=", "+closureArray[2*i]+"/"+loop.charAt(i);
+							plugboardMapping.put(closureArray[2*i].charAt(0),loop.charAt(i));
+							
+						}
+					}
+					
+					i++;
+				
+				}
+				
+				if(validSettings){
+					System.out.println("Plugboard settings loop:\n"+settings);
+				}
+			}
 		}
 		//System.out.println(encryptions);
 		return new ArrayList<String>();
