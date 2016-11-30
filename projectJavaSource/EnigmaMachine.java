@@ -66,6 +66,8 @@ public class EnigmaMachine{
 		
 		scanner = new Scanner(System.in);
 		
+		plugboard.enablePrinter();
+		
 		permutation="A, 1, 2, 3";
 	}
 	

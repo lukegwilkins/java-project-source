@@ -374,14 +374,46 @@ public class BombeMachine{
 						}
 						
 						if(!consistentMergedPlugboardSettings.isEmpty()){
+							String outputString;
 							System.out.println(rotorPositions);
-							System.out.println(consistentMergedPlugboardSettings);
+							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
+								outputString="";
+								
+								for(Character key: plugboardSettings.keySet()){
+									if(outputString.indexOf(key)==-1){
+										if((int)key < (int)plugboardSettings.get(key)){
+											outputString+=key+"/"+plugboardSettings.get(key)+", ";
+										}
+										else{
+											outputString+=plugboardSettings.get(key)+"/"+key+", ";
+										}
+									}
+								}
+								outputString=outputString.substring(0,outputString.length()-2);
+								System.out.println(outputString);
+							}
 						}
 					}
 				}
 				else{
 					System.out.println(rotorPositions);
-					System.out.println(closuresPlugboardSettings);
+					String outputString;			
+					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
+						outputString="";
+								
+						for(Character key: plugboardSettings.keySet()){
+							if(outputString.indexOf(key)==-1){
+								if((int)key < (int)plugboardSettings.get(key)){
+									outputString+=key+"/"+plugboardSettings.get(key)+", ";
+								}
+								else{
+									outputString+=plugboardSettings.get(key)+"/"+key+", ";
+								}
+							}
+						}
+						outputString=outputString.substring(0,outputString.length()-1);
+						System.out.println(outputString);
+					}
 				}
 			}
 		}
