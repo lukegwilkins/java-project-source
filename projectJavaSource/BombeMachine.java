@@ -295,34 +295,34 @@ public class BombeMachine{
 	
 	public void crackClosures(ArrayList<String> closures){
 		char leftRotorPos='a';
-		char middleRotorPos='z';
-		char rightRotorPos='p';
+		char middleRotorPos='a';
+		char rightRotorPos='a';
 		ArrayList<ArrayList<HashMap<Character,Character>>> closuresPlugboardSettings;
 		String rotorPositions;
-		for(int i=0; i<1;i++){
+		
+		for(int i=0; i<26*26*26;i++){
 			closuresPlugboardSettings = new ArrayList<ArrayList<HashMap<Character,Character>>>();
 			rotorPositions=""+leftRotorPos+middleRotorPos+rightRotorPos;
-			System.out.println(rotorPositions);
+
 			for(int j=0; j<closures.size();j++){
 				closuresPlugboardSettings.add(generatePlugboardSettings(closures.get(j),rotorPositions));
 			}
-			System.out.println(closuresPlugboardSettings);
 			
-			if(leftRotorPos=='z'){
+			if(rightRotorPos=='z'){
 					
 				if(middleRotorPos=='z'){
-					rightRotorPos=(char)((int)rightRotorPos+1);
+					leftRotorPos=(char)((int)leftRotorPos+1);
 					middleRotorPos='a';
 				}
 				else{
 					middleRotorPos=(char)((int)middleRotorPos+1);
 				}
 					
-				leftRotorPos='a';
+				rightRotorPos='a';
 			}
 			else{
 					
-				leftRotorPos=(char)((int)leftRotorPos+1);
+				rightRotorPos=(char)((int)rightRotorPos+1);
 			}
 			
 			boolean emptyArraylist = false;
@@ -335,41 +335,55 @@ public class BombeMachine{
 			}
 			
 			if(!emptyArraylist){
-				refinePlugboardSettings(closuresPlugboardSettings);
-			
-				emptyArraylist = false;
-				j =0;
-				
-				while(!emptyArraylist && j<closuresPlugboardSettings.size()){
-					if(closuresPlugboardSettings.size()==0){
-						emptyArraylist=true;
-					}
-					j++;
-				}
-				if(!emptyArraylist){
-					int[] indices = new int[closuresPlugboardSettings.size()];
-					while(indices[indices.length-1]<closuresPlugboardSettings.get(indices.length-1).size()){
-						
-						System.out.println(Arrays.toString(indices));
-						ArrayList<HashMap<Character, Character>> combinationSettings = new ArrayList<HashMap<Character, Character>>();
-						
-						for(int k=0;k<closuresPlugboardSettings.size();k++){
-							combinationSettings.add(closuresPlugboardSettings.get(k).get(indices[k]));
+				if(closuresPlugboardSettings.size()>1){
+					refinePlugboardSettings(closuresPlugboardSettings);
+					
+					emptyArraylist = false;
+					j =0;
+					
+					while(!emptyArraylist && j<closuresPlugboardSettings.size()){
+						if(closuresPlugboardSettings.get(j).size()==0){
+							emptyArraylist=true;
 						}
-						attemptToMergeSettings(combinationSettings);
-						
-						indices[0]+=1;
-						for(int k=1;k<indices.length;k++){
-							if(indices[k-1]==closuresPlugboardSettings.get(k-1).size()){
-								indices[k]+=1;
-								indices[k-1]=0;
-							}
-						}
+						j++;
 					}
 					
+					if(!emptyArraylist){
+						ArrayList<HashMap<Character, Character>> consistentMergedPlugboardSettings = new ArrayList<HashMap<Character, Character>>();
+						int[] indices = new int[closuresPlugboardSettings.size()];
+						while(indices[indices.length-1]<closuresPlugboardSettings.get(indices.length-1).size()){
+							
+							ArrayList<HashMap<Character, Character>> combinationSettings = new ArrayList<HashMap<Character, Character>>();
+							
+							for(int k=0;k<closuresPlugboardSettings.size();k++){
+								combinationSettings.add(closuresPlugboardSettings.get(k).get(indices[k]));
+							}
+							
+							HashMap<Character,Character> mergedSettings=attemptToMergeSettings(combinationSettings);
+							if(!mergedSettings.isEmpty()){
+								consistentMergedPlugboardSettings.add(mergedSettings);
+							}
+							
+							indices[0]+=1;
+							for(int k=1;k<indices.length;k++){
+								if(indices[k-1]==closuresPlugboardSettings.get(k-1).size()){
+									indices[k]+=1;
+									indices[k-1]=0;
+								}
+							}
+						}
+						
+						if(!consistentMergedPlugboardSettings.isEmpty()){
+							System.out.println(rotorPositions);
+							System.out.println(consistentMergedPlugboardSettings);
+						}
+					}
+				}
+				else{
+					System.out.println(rotorPositions);
+					System.out.println(closuresPlugboardSettings);
 				}
 			}
-			System.out.println(closuresPlugboardSettings);
 		}
 	}
 	
@@ -378,14 +392,23 @@ public class BombeMachine{
 		for(int i = 0;i<settings.size();i++){
 			for(int j = i+1;j<settings.size();j++){				
 				if(!consistentPlugboardSettings(settings.get(i), settings.get(j))){
-					System.out.println("inconsistent combination");
+					//System.out.println("inconsistent combination");
 					return new HashMap<Character,Character>();
 				}
 			}
 		}
 		
-		System.out.println("consistent combination, can merge");
-		return new HashMap<Character,Character>();
+		//System.out.println("consistent combination, can merge");
+		HashMap<Character,Character> mergedSettings = new HashMap<Character,Character>();
+		
+		for(int i=0; i<settings.size();i++){
+			for(Character key: settings.get(i).keySet()){
+				if(!mergedSettings.containsKey(key)){
+					mergedSettings.put(key,settings.get(i).get(key));
+				}
+			}
+		}
+		return mergedSettings;
 	}
 	
 	public void refinePlugboardSettings(ArrayList<ArrayList<HashMap<Character,Character>>> closuresPlugboardSettings){
@@ -457,28 +480,15 @@ public class BombeMachine{
 	
 	public void run(){
 		String input ="";
-		System.out.println(permutation);
-		ArrayList<String> closures = new ArrayList<String>();
+		System.out.println("Current rotor permutation is: "+permutation);
+		/*ArrayList<String> closures = new ArrayList<String>();
 		closures.add("e,14,n,20");
 		closures.add("l,16,k,6,w,12,a,4");
-		closures.add("o,18,w,24,j,13,y,17");
-		
-		HashMap<Character,Character> firstSettings = new HashMap<Character,Character>();
-		HashMap<Character,Character> secondSettings = new HashMap<Character,Character>();
-		
-		firstSettings.put('e','a');
-		firstSettings.put('b','m');
-		firstSettings.put('c','k');
-		
-		secondSettings.put('d','l');
-		secondSettings.put('b','m');
-		secondSettings.put('c','k');
-		
-		consistentPlugboardSettings(firstSettings, secondSettings);
+		closures.add("o,18,w,24,j,13,y,17");*/
 		
 		while(!(input.equals("quit"))){
 			System.out.println("1. rotor permutation settings");
-			System.out.println("2. input closure");
+			System.out.println("2. input closures");
 			System.out.println("type quit to exit");
 			
 			input = scanner.nextLine();
@@ -486,6 +496,17 @@ public class BombeMachine{
 				editRotorPermutation();
 			}
 			else if(input.equals("2")){
+				System.out.println("Current rotor permutation is: "+ permutation);
+				ArrayList<String> closures= new ArrayList<String>();
+				
+				while(!input.equals("end")){
+					System.out.println("Input a closure");
+					System.out.println("Type end when you have input all closures.");
+					input = scanner.nextLine();
+					if(!input.equals("end")){
+						closures.add(input);
+					}
+				}
 				crackClosures(closures);
 				/*
 				System.out.println("input closure, e.g. L,20,R,3,T,13");
