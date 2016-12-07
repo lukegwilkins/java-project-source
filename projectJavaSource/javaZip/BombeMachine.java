@@ -13,6 +13,7 @@ public class BombeMachine{
 	private ArrayList<char[]> menu;
 	private int cribPosition;
 	private Scanner scanner;
+	
 	public BombeMachine(){
 		printer = new Printer();
 		
@@ -53,7 +54,7 @@ public class BombeMachine{
 		rotors[4].setRingPosition(12);*/
 		rotors[2].setNextRotor(rotors[1]);
 		rotors[1].setNextRotor(rotors[0]);
-		rotors[0].setNextRotor(reflectors[1]);
+		rotors[0].setNextRotor(reflectors[0]);
 		
 		scrambler = new Scrambler();
 		scrambler.setFirstRotor(rotors[2]);
@@ -92,7 +93,7 @@ public class BombeMachine{
 		this.cipherText = cipherText.replaceAll("\\s+","");;
 	}
 	
-	public ArrayList<String> generatePlugboardSettings(String positions, String closure){
+	public ArrayList<HashMap<Character,Character>> generatePlugboardSettings(String closure,String positions){
 		Rotor firstRotor = (Rotor) scrambler.getFirstRotor();
 		Rotor secondRotor = (Rotor) firstRotor.getNextRotor();
 		Rotor thirdRotor = (Rotor) secondRotor.getNextRotor();
@@ -100,38 +101,104 @@ public class BombeMachine{
 		secondRotor.setPosition(positions.charAt(1));
 		thirdRotor.setPosition(positions.charAt(0));
 		
+		ArrayList<HashMap<Character,Character>> plugboardSettings = new ArrayList<HashMap<Character,Character>>();
 		//System.out.println(secondRotor.getCharOnTop());
 		//System.out.println(thirdRotor.getCharOnTop());
 		
 		ArrayList<char[]> encryptions = new ArrayList<char[]>();
+		int noOfLetters=0;
 		//scrambler.setCrackingMode(false);
 		String[] closureArray = closure.split(",");
 		for(int i=1;i<closureArray.length;i+=2){
 			//System.out.println(closureArray[i]);
+			//we rotate then encrypt, so you don't encrypt with the initial position you encrypt with the position after
 			char position = (char)(((int)Character.toLowerCase(positions.charAt(2))%97+Integer.parseInt(closureArray[i]))%26 + 97);
-			//System.out.println(position);
 			firstRotor.setPosition(position);
 			
 			encryptions.add(scrambler.encryptAlphabet());
 			//System.out.println(firstRotor.getCharOnTop());
-			System.out.println(new String(scrambler.encryptAlphabet()));
+			noOfLetters+=1;
+			//System.out.println(new String(scrambler.encryptAlphabet()));
 		}
+		//System.out.println(noOfLetters);
 		ArrayList<Character> alphabet=new ArrayList<Character>(Arrays.asList('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'));
 		while(!alphabet.isEmpty()){
 			int startWire = (int)alphabet.get(0)-97;
 			int wire = startWire;
-			String out = ""+(char)(97+wire);
+			String loop = ""+(char)(97+wire);
 			do{
 				for(int j=0; j<encryptions.size(); j++){
-					out+=encryptions.get(j)[wire];
+					loop+=encryptions.get(j)[wire];
 					wire = (int)encryptions.get(j)[wire]-97;
 				}
 				alphabet.remove((Character)(char)(wire+97));
 			}while(wire!=startWire);
-			System.out.println("Plugboard settings loop:\n"+out);
+			//System.out.println(out.length());
+			if(loop.length()==noOfLetters+1){
+				//String settings="";
+				HashMap<Character,Character> plugboardMapping = new HashMap<Character,Character>();
+				boolean validSettings=true;					
+				
+				/*settings=loop.charAt(0)+"/"+closureArray[0];
+				plugboardMapping.put(loop.charAt(0),closureArray[0].charAt(0));
+				plugboardMapping.put(closureArray[0].charAt(0),loop.charAt(0));*/
+								
+				int i = 0;
+				while(i<loop.length()-1&&validSettings){
+					/*if((int)(loop.charAt(i))<(int)(closureArray[2*i].charAt(0))){
+						settings+=", "+loop.charAt(i)+"/"+closureArray[2*i];
+						
+					}
+					else{
+						settings+=", "+closureArray[2*i]+"/"+loop.charAt(i);*/
+					if(plugboardMapping.containsKey(closureArray[2*i].charAt(0))){
+						
+						if(plugboardMapping.get(closureArray[2*i].charAt(0))!=loop.charAt(i)){
+							validSettings=false;
+						}
+						
+					}
+					else{
+						
+						
+						plugboardMapping.put(closureArray[2*i].charAt(0),loop.charAt(i));
+						
+					}
+				
+					
+					if(plugboardMapping.containsKey(loop.charAt(i))){							
+						if(plugboardMapping.get(loop.charAt(i))!=closureArray[2*i].charAt(0)){
+							validSettings=false;
+						}
+					}
+					else{							
+							
+					plugboardMapping.put(loop.charAt(i),closureArray[2*i].charAt(0));
+							
+					}
+					
+					if(plugboardMapping.containsKey(closureArray[2*i].charAt(0))){
+						if(plugboardMapping.get(closureArray[2*i].charAt(0))!=loop.charAt(i)){
+							validSettings=false;
+						}
+					}
+					else{
+						
+						plugboardMapping.put(closureArray[2*i].charAt(0),loop.charAt(i));
+					}
+
+					i++;
+				
+				}
+				
+				if(validSettings){
+					plugboardSettings.add(plugboardMapping);
+					//System.out.println("Plugboard settings loop:\n"+settings);
+				}
+			}
 		}
 		//System.out.println(encryptions);
-		return new ArrayList<String>();
+		return plugboardSettings;
 	}
 	
 	public void generateMenu(int position){
@@ -226,24 +293,261 @@ public class BombeMachine{
 		}
 	}
 	
+	public void crackClosures(ArrayList<String> closures){
+		char leftRotorPos='a';
+		char middleRotorPos='a';
+		char rightRotorPos='a';
+		ArrayList<ArrayList<HashMap<Character,Character>>> closuresPlugboardSettings;
+		String rotorPositions;
+		
+		for(int i=0; i<26*26*26;i++){
+			closuresPlugboardSettings = new ArrayList<ArrayList<HashMap<Character,Character>>>();
+			rotorPositions=""+leftRotorPos+middleRotorPos+rightRotorPos;
+
+			for(int j=0; j<closures.size();j++){
+				closuresPlugboardSettings.add(generatePlugboardSettings(closures.get(j),rotorPositions));
+			}
+			
+			if(rightRotorPos=='z'){
+					
+				if(middleRotorPos=='z'){
+					leftRotorPos=(char)((int)leftRotorPos+1);
+					middleRotorPos='a';
+				}
+				else{
+					middleRotorPos=(char)((int)middleRotorPos+1);
+				}
+					
+				rightRotorPos='a';
+			}
+			else{
+					
+				rightRotorPos=(char)((int)rightRotorPos+1);
+			}
+			
+			boolean emptyArraylist = false;
+			int j =0;
+			while(!emptyArraylist && j<closuresPlugboardSettings.size()){
+				if(closuresPlugboardSettings.get(j).size()==0){
+					emptyArraylist=true;
+				}
+				j++;
+			}
+			
+			if(!emptyArraylist){
+				if(closuresPlugboardSettings.size()>1){
+					refinePlugboardSettings(closuresPlugboardSettings);
+					
+					emptyArraylist = false;
+					j =0;
+					
+					while(!emptyArraylist && j<closuresPlugboardSettings.size()){
+						if(closuresPlugboardSettings.get(j).size()==0){
+							emptyArraylist=true;
+						}
+						j++;
+					}
+					
+					if(!emptyArraylist){
+						ArrayList<HashMap<Character, Character>> consistentMergedPlugboardSettings = new ArrayList<HashMap<Character, Character>>();
+						int[] indices = new int[closuresPlugboardSettings.size()];
+						while(indices[indices.length-1]<closuresPlugboardSettings.get(indices.length-1).size()){
+							
+							ArrayList<HashMap<Character, Character>> combinationSettings = new ArrayList<HashMap<Character, Character>>();
+							
+							for(int k=0;k<closuresPlugboardSettings.size();k++){
+								combinationSettings.add(closuresPlugboardSettings.get(k).get(indices[k]));
+							}
+							
+							HashMap<Character,Character> mergedSettings=attemptToMergeSettings(combinationSettings);
+							if(!mergedSettings.isEmpty()){
+								consistentMergedPlugboardSettings.add(mergedSettings);
+							}
+							
+							indices[0]+=1;
+							for(int k=1;k<indices.length;k++){
+								if(indices[k-1]==closuresPlugboardSettings.get(k-1).size()){
+									indices[k]+=1;
+									indices[k-1]=0;
+								}
+							}
+						}
+						
+						if(!consistentMergedPlugboardSettings.isEmpty()){
+							String outputString;
+							System.out.println(rotorPositions);
+							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
+								outputString="";
+								
+								for(Character key: plugboardSettings.keySet()){
+									if(outputString.indexOf(key)==-1){
+										if((int)key < (int)plugboardSettings.get(key)){
+											outputString+=key+"/"+plugboardSettings.get(key)+", ";
+										}
+										else{
+											outputString+=plugboardSettings.get(key)+"/"+key+", ";
+										}
+									}
+								}
+								outputString=outputString.substring(0,outputString.length()-2);
+								System.out.println(outputString);
+							}
+						}
+					}
+				}
+				else{
+					System.out.println(rotorPositions);
+					String outputString;			
+					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
+						outputString="";
+								
+						for(Character key: plugboardSettings.keySet()){
+							if(outputString.indexOf(key)==-1){
+								if((int)key < (int)plugboardSettings.get(key)){
+									outputString+=key+"/"+plugboardSettings.get(key)+", ";
+								}
+								else{
+									outputString+=plugboardSettings.get(key)+"/"+key+", ";
+								}
+							}
+						}
+						outputString=outputString.substring(0,outputString.length()-1);
+						System.out.println(outputString);
+					}
+				}
+			}
+		}
+	}
+	
+	public HashMap<Character,Character> attemptToMergeSettings(ArrayList<HashMap<Character,Character>> settings){
+		
+		for(int i = 0;i<settings.size();i++){
+			for(int j = i+1;j<settings.size();j++){				
+				if(!consistentPlugboardSettings(settings.get(i), settings.get(j))){
+					//System.out.println("inconsistent combination");
+					return new HashMap<Character,Character>();
+				}
+			}
+		}
+		
+		//System.out.println("consistent combination, can merge");
+		HashMap<Character,Character> mergedSettings = new HashMap<Character,Character>();
+		
+		for(int i=0; i<settings.size();i++){
+			for(Character key: settings.get(i).keySet()){
+				if(!mergedSettings.containsKey(key)){
+					mergedSettings.put(key,settings.get(i).get(key));
+				}
+			}
+		}
+		return mergedSettings;
+	}
+	
+	public void refinePlugboardSettings(ArrayList<ArrayList<HashMap<Character,Character>>> closuresPlugboardSettings){
+		int i=0;
+		while(i<closuresPlugboardSettings.size()){
+			
+			int j=0;
+			while(j<closuresPlugboardSettings.get(i).size()){
+				boolean validSettings=true;		
+				int n=0;
+				
+				while(validSettings && n<closuresPlugboardSettings.size()){
+					if(n != i){
+						validSettings=false;
+						int k = 0;
+						
+						while(!validSettings && k<closuresPlugboardSettings.get(n).size()){
+							if(consistentPlugboardSettings(closuresPlugboardSettings.get(i).get(j),closuresPlugboardSettings.get(n).get(k))){
+								validSettings=true;
+							}
+							
+							k++;
+						}
+					}
+					n++;
+				}
+				
+				if(!validSettings){
+					closuresPlugboardSettings.get(i).remove(j);
+					for(ArrayList<HashMap<Character,Character>> closureSettings: closuresPlugboardSettings){
+						if(closureSettings.size()==0){
+							return;
+						}
+					}
+				}
+				j++;
+			}
+			
+			i++;
+		}
+	}
+	
+	public boolean consistentPlugboardSettings(HashMap<Character,Character> firstSettings, HashMap<Character,Character> secondSettings){
+			ArrayList<Character> commonSwapCharacters = new ArrayList<Character>();
+			
+			for(Character key: firstSettings.keySet()){
+				if(secondSettings.containsKey(key)){
+					commonSwapCharacters.add(key);
+				}
+			}
+			
+			//System.out.println(commonSwapCharacters);
+			boolean consistentSettings = true;
+			int i = 0;
+			char key;
+			
+			while(consistentSettings && i<commonSwapCharacters.size()){
+				key=commonSwapCharacters.get(i);
+				
+				if(firstSettings.get(key)!=secondSettings.get(key)){
+					consistentSettings=false;
+				}
+				
+				i++;
+			}
+			//System.out.println(consistentSettings);
+			return consistentSettings;
+	}
+	
 	public void run(){
 		String input ="";
+		System.out.println("Current rotor permutation is: "+permutation);
+		/*ArrayList<String> closures = new ArrayList<String>();
+		closures.add("e,14,n,20");
+		closures.add("l,16,k,6,w,12,a,4");
+		closures.add("o,18,w,24,j,13,y,17");*/
+		
 		while(!(input.equals("quit"))){
 			System.out.println("1. rotor permutation settings");
-			System.out.println("2. input closure");
+			System.out.println("2. input closures");
 			System.out.println("type quit to exit");
+			
 			input = scanner.nextLine();
 			if(input.equals("1")){
 				editRotorPermutation();
 			}
 			else if(input.equals("2")){
+				System.out.println("Current rotor permutation is: "+ permutation);
+				ArrayList<String> closures= new ArrayList<String>();
+				
+				while(!input.equals("end")){
+					System.out.println("Input a closure");
+					System.out.println("Type end when you have input all closures.");
+					input = scanner.nextLine();
+					if(!input.equals("end")){
+						closures.add(input);
+					}
+				}
+				crackClosures(closures);
+				/*
 				System.out.println("input closure, e.g. L,20,R,3,T,13");
 				String closure = scanner.nextLine();
 				
 				System.out.println("input starting positions, e.g. ABC");
 				String positions = scanner.nextLine();
 				
-				generatePlugboardSettings(positions,closure);
+				generatePlugboardSettings(closure, positions);*/
 			}
 		}
 	}
