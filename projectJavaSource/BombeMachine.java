@@ -603,6 +603,147 @@ public class BombeMachine{
 		}
 	}
 	
+	public ArrayList<ArrayList<String>> depthFirstPathFinder(HashMap<Character,HashMap<Character,Integer>> menu,ArrayList<String> path){
+			char startingChar=path.get(path.size()-1).charAt(0);
+			ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
+			
+			for(char neighbour:menu.get(startingChar).keySet()){
+				ArrayList<String> newPath = new ArrayList<String>(path);
+				newPath.add(""+menu.get(startingChar).get(neighbour));
+				newPath.add(""+neighbour);
+				
+				if(path.size()>1){
+					if(neighbour!=path.get(path.size()-3).charAt(0)){
+						if(path.contains(""+neighbour)){
+							paths.add(newPath);
+						}
+						else{							
+							paths.addAll(depthFirstPathFinder(menu,newPath));
+							
+						}
+					}
+				}
+				else{
+					paths.addAll(depthFirstPathFinder(menu,newPath));
+				}
+			}
+			
+			if(paths.isEmpty()){
+				ArrayList<ArrayList<String>> temp = new ArrayList<ArrayList<String>>();
+				temp.add(path);
+				return temp;
+			}
+			else{
+				return paths;
+			}
+	}
+	
+	public ArrayList<ArrayList<String>>	depthFirstSearch(HashMap<Character,HashMap<Character,Integer>> menu){
+		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
+		
+		for(char vertices:menu.keySet()){
+			ArrayList<String> temp= new ArrayList<String>();
+			temp.add(""+vertices);
+			ArrayList<ArrayList<String>> returnedPaths = depthFirstPathFinder(menu,temp);
+			
+			for(ArrayList<String> arr : returnedPaths){
+				//remove paths that contain a closure but aren't a closure themselves, i.e. tail into closure
+				if(arr.get(arr.size()-1).equals(arr.get(0)) || arr.indexOf(arr.get(arr.size()-1))==arr.size()-1){
+					paths.add(arr);
+					
+				}
+			}
+			
+			//paths.addAll(returnedPaths);
+		}
+		paths= removeClosuresInPaths(paths);
+		//System.out.println(paths);
+		//normalise closures
+		for(int i =0;i<paths.size();i++){
+			if(paths.get(i).get(0).equals(paths.get(i).get(paths.get(i).size()-1))){
+				paths.set(i,normalise(paths.get(i)));
+			}
+		}
+		//remove copies /reverse copies
+		for(int i=0;i<paths.size();i++){
+			ArrayList<String> reversedList = new ArrayList<String>(paths.get(i));
+			
+			for(int j=0; j<reversedList.size()/2;j++){
+				String temp = reversedList.get(j);
+				reversedList.set(j,reversedList.get(reversedList.size()-j-1));
+				reversedList.set(reversedList.size()-j-1,temp);
+			}
+			
+			int j=0;
+			while(j<paths.size()){
+				if(j!=i && paths.get(i).equals(paths.get(j))){
+					paths.remove(j);
+				}
+				else if(i!=j && paths.get(j).equals(reversedList)){
+					paths.remove(j);
+				}
+				else{
+					j++;
+				}
+			}
+		}
+		
+		
+		return paths;
+	}
+	
+	public ArrayList<ArrayList<String>> removeClosuresInPaths(ArrayList<ArrayList<String>> paths){
+		for(int i=0;i<paths.size();i++){
+			ArrayList<String> arr = paths.get(i);
+			
+			if(arr.get(arr.size()-1).equals(arr.get(0))){
+				for(int j=0; j<paths.size();j++){
+					if(j!=i){
+						if(paths.get(j).indexOf(arr.get(0))==paths.get(j).indexOf(arr.get(1))-1){
+		
+							int index=0;
+							while(arr.get(index).equals(paths.get(j).get(index))){
+								index++;
+							}
+							
+							for(int k=0;k<index-1;k++){
+								paths.get(j).remove(0);
+							}
+						}
+					}
+				}
+			}
+		}
+		return paths;
+	}
+	
+	public ArrayList<String> normalise(ArrayList<String> closure){
+		int index=0;
+		for(int i=2; i<closure.size();i+=2){
+			if(closure.get(i).charAt(0)<closure.get(index).charAt(0)){
+				index=i;
+			}
+		}
+		
+		if(index>0){
+			ArrayList<String> newList = new ArrayList<String>();
+			for(int i=0; i<closure.size();i++){
+				if(i==0){
+					newList.add(closure.get((i+index)%closure.size()));
+				}
+				else if(!(closure.get((i+index)%closure.size()).equals(newList.get(newList.size()-1)))){
+					newList.add(closure.get((i+index)%closure.size()));
+				}
+			}
+			
+			newList.add(newList.get(0));
+			
+			return newList;
+		}
+		else{
+			return closure;
+		}
+	}
 	public void run(){
 		String input ="";
 		System.out.println("Current rotor permutation is: "+permutation);
@@ -655,6 +796,42 @@ public class BombeMachine{
 		list.add('5');
 		System.out.println(bombe.permutations(list,3));
 		bombe.changeRotorPermutation("b245");*/
+		HashMap<Character,HashMap<Character,Integer>> menu = new HashMap<Character,HashMap<Character,Integer>>();
+		HashMap<Character,Integer> neighboursOfA = new HashMap<Character,Integer>();
+		
+		neighboursOfA.put('b',1);
+		neighboursOfA.put('c',2);
+		menu.put('a',neighboursOfA);
+		
+		HashMap<Character,Integer> neighboursOfB = new HashMap<Character,Integer>();
+		neighboursOfB.put('a',1);
+		neighboursOfB.put('d',3);
+		menu.put('b',neighboursOfB);
+		
+		HashMap<Character,Integer> neighboursOfC = new HashMap<Character,Integer>();
+		neighboursOfC.put('a',2);
+		neighboursOfC.put('d',4);
+		neighboursOfC.put('f',6);
+		menu.put('c',neighboursOfC);
+		
+		HashMap<Character,Integer> neighboursOfD = new HashMap<Character,Integer>();
+		neighboursOfD.put('b',3);
+		neighboursOfD.put('c',4);
+		neighboursOfD.put('e',5);
+		menu.put('d',neighboursOfD);
+		
+		HashMap<Character,Integer> neighboursOfE = new HashMap<Character,Integer>();
+		neighboursOfE.put('d',5);
+		menu.put('e',neighboursOfE);
+		
+		HashMap<Character,Integer> neighboursOfF = new HashMap<Character,Integer>();
+		neighboursOfF.put('c',6);
+		menu.put('f',neighboursOfF);
+		
+		ArrayList<String> start = new ArrayList<String>();
+		start.add("a");
+		
+		System.out.println(bombe.depthFirstSearch(menu));
 		bombe.run();
 	}
 }

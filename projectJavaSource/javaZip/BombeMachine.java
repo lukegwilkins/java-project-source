@@ -93,11 +93,74 @@ public class BombeMachine{
 		this.cipherText = cipherText.replaceAll("\\s+","");;
 	}
 	
+	private void changeRotorPermutation(String rotorPermutation){
+		String[] stringPositions=rotorPermutation.split("");
+		//System.out.println(Arrays.toString(stringPositions));
+		//String temp = permutation;
+		int rotor = Integer.parseInt(stringPositions[stringPositions.length-1]);
+		Rotor prevRotor = rotors[rotor-1];
+		Rotor firstRotor = prevRotor;
+		
+		firstRotor.disableDoubleStep();
+		permutation= "" + rotor;
+		
+		for(int i=2; i>0;i--){
+			rotor = Integer.parseInt(stringPositions[i]);
+			prevRotor.setNextRotor(rotors[rotor-1]);
+			prevRotor = rotors[rotor-1];
+			permutation=""+rotor+", "+permutation;
+			prevRotor.disableDoubleStep();
+		}
+		
+		String reflectorString = stringPositions[0];
+		permutation= reflectorString + ", "+ permutation;
+		
+		char reflectorChar = reflectorString.charAt(0);
+		
+		Reflector reflector = reflectors[(int)Character.toLowerCase(reflectorChar) - 97];
+		prevRotor.setNextRotor(reflector);
+		
+		((Rotor)firstRotor.getNextRotor()).enableDoubleStep();
+		scrambler.setFirstRotor(firstRotor);
+	}
+	
+	public ArrayList<ArrayList<Character>> permutations(ArrayList<Character> charList, int amount){
+		ArrayList<ArrayList<Character>> returnList = new ArrayList<ArrayList<Character>>();
+		if(amount>charList.size()){
+			amount=charList.size();
+		}
+		if(charList.size()<=1){
+			returnList.add(charList);
+			return returnList;
+		}
+		else if(amount<=1){
+			for(Character letter: charList){
+				ArrayList<Character> temp = new ArrayList<Character>();
+				temp.add(letter);
+				returnList.add(temp);
+			}
+			
+			return returnList;
+		}
+		else{
+			for(int i=0; i<charList.size();i++){
+				ArrayList<Character> reducedList = new ArrayList<Character>(charList);
+				char firstPermutationElement = reducedList.get(i);
+				reducedList.remove(i);
+				ArrayList<ArrayList<Character>> reducedListPermutations = permutations(reducedList,amount-1);
+				for(ArrayList<Character> permutation: reducedListPermutations){
+					permutation.add(0,firstPermutationElement);
+					returnList.add(permutation);
+				}
+			}
+			return returnList;
+		}
+	}
+	
 	public ArrayList<HashMap<Character,Character>> generatePlugboardSettings(String closure,String positions){
 		Rotor firstRotor = (Rotor) scrambler.getFirstRotor();
 		Rotor secondRotor = (Rotor) firstRotor.getNextRotor();
 		Rotor thirdRotor = (Rotor) secondRotor.getNextRotor();
-		
 		secondRotor.setPosition(positions.charAt(1));
 		thirdRotor.setPosition(positions.charAt(0));
 		
@@ -294,11 +357,12 @@ public class BombeMachine{
 	}
 	
 	public void crackClosures(ArrayList<String> closures){
+		String rotorPositions;
 		char leftRotorPos='a';
 		char middleRotorPos='a';
 		char rightRotorPos='a';
+		
 		ArrayList<ArrayList<HashMap<Character,Character>>> closuresPlugboardSettings;
-		String rotorPositions;
 		
 		for(int i=0; i<26*26*26;i++){
 			closuresPlugboardSettings = new ArrayList<ArrayList<HashMap<Character,Character>>>();
@@ -374,8 +438,9 @@ public class BombeMachine{
 						}
 						
 						if(!consistentMergedPlugboardSettings.isEmpty()){
+							System.out.println("rotor permutation is "+permutation);
+							System.out.println("rotor positions are "+rotorPositions);
 							String outputString;
-							System.out.println(rotorPositions);
 							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
 								outputString="";
 								
@@ -396,7 +461,8 @@ public class BombeMachine{
 					}
 				}
 				else{
-					System.out.println(rotorPositions);
+					System.out.println("rotor permutation is "+permutation);
+					System.out.println("rotor positions are "+rotorPositions);
 					String outputString;			
 					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
 						outputString="";
@@ -510,6 +576,33 @@ public class BombeMachine{
 			return consistentSettings;
 	}
 	
+	public void crackEnigma(ArrayList<String> closures){
+		ArrayList<Character> temp = new ArrayList<Character>();
+		
+		temp.add('1');
+		temp.add('2');
+		temp.add('3');
+		temp.add('4');
+		temp.add('5');
+		
+		ArrayList<ArrayList<Character>> rotorPermutations= permutations(temp,3);
+		
+		char[] reflectors = {'a','b','c'};
+		for(char reflector: reflectors){			
+			for(ArrayList<Character> permutation: rotorPermutations){
+				String rotorPermutation=""+reflector;
+				
+				for(Character rotorPosition: permutation){
+					rotorPermutation+=rotorPosition;
+				}
+				
+				changeRotorPermutation(rotorPermutation);
+				System.out.println(this.permutation);
+				crackClosures(closures);
+			}
+		}
+	}
+	
 	public void run(){
 		String input ="";
 		System.out.println("Current rotor permutation is: "+permutation);
@@ -539,7 +632,7 @@ public class BombeMachine{
 						closures.add(input);
 					}
 				}
-				crackClosures(closures);
+				crackEnigma(closures);
 				/*
 				System.out.println("input closure, e.g. L,20,R,3,T,13");
 				String closure = scanner.nextLine();
@@ -554,10 +647,14 @@ public class BombeMachine{
 	
 	public static void main(String args[]){
 		BombeMachine bombe = new BombeMachine();
-		/*bombe.setCipherText("vpaag kddub tajnjkyodnntej");
-		bombe.setCrib("hello");
-		bombe.generateMenu(1);
-		bombe.generatePlugboardSettings("ABC","E,2,O,5,L,3,M,10,K,16,E");*/
+		/*ArrayList<Character> list = new ArrayList<Character>();
+		list.add('1');
+		list.add('2');
+		list.add('3');
+		list.add('4');
+		list.add('5');
+		System.out.println(bombe.permutations(list,3));
+		bombe.changeRotorPermutation("b245");*/
 		bombe.run();
 	}
 }
