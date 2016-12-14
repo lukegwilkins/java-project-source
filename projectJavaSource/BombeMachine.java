@@ -10,7 +10,7 @@ public class BombeMachine{
 	private String crib;
 	private String cipherText;
 	private String permutation;
-	private HashMap<Character,HashMap<Character,Integer>> menu;
+	private HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu;
 	private int cribPosition;
 	private Scanner scanner;
 	
@@ -70,7 +70,7 @@ public class BombeMachine{
 			}
 			menu.put((char)i,row);
 		}*/
-		menu = new HashMap<Character,HashMap<Character,Integer>>();
+		menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
 		//System.out.println(menu);
 		permutation="A, 1, 2, 3";
 		
@@ -91,6 +91,10 @@ public class BombeMachine{
 	
 	public void setCipherText(String cipherText){
 		this.cipherText = cipherText.replaceAll("\\s+","");;
+	}
+	
+	public HashMap<Character,HashMap<Character,ArrayList<Integer>>> getMenu(){
+		return menu;
 	}
 	
 	private void changeRotorPermutation(String rotorPermutation){
@@ -267,13 +271,35 @@ public class BombeMachine{
 	public void generateMenu(int position){
 		String cribCipher = cipherText.substring(position-1, position-1 + crib.length());
 		cribPosition=position;
-		menu = new HashMap<Character,HashMap<Character,Integer>>();
+		menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
 		
-		/*for(i=0; i<crib.length();i++){
-			if(menu.containsKey(crib.charAt(i))){
-				menu.get(crib.charAt(i)).put(cribCipher.charAt())
+		for(int i=0; i<crib.length();i++){
+			if(!menu.containsKey(crib.charAt(i))){
+				menu.put(crib.charAt(i), new HashMap<Character,ArrayList<Integer>>());
 			}
-		}*/
+			
+			if(!menu.containsKey(cribCipher.charAt(i))){
+				menu.put(cribCipher.charAt(i), new HashMap<Character,ArrayList<Integer>>());
+			}
+			
+			if(menu.get(crib.charAt(i)).containsKey(cribCipher.charAt(i))){
+				menu.get(crib.charAt(i)).get(cribCipher.charAt(i)).add(i+1);
+			}
+			else{
+				ArrayList<Integer> temp = new ArrayList<Integer>();
+				temp.add(i+1);
+				menu.get(crib.charAt(i)).put(cribCipher.charAt(i),temp);
+			}
+			
+			if(menu.get(cribCipher.charAt(i)).containsKey(crib.charAt(i))){
+				menu.get(cribCipher.charAt(i)).get(crib.charAt(i)).add(i+1);
+			}
+			else{
+				ArrayList<Integer> temp = new ArrayList<Integer>();
+				temp.add(i+1);
+				menu.get(cribCipher.charAt(i)).put(crib.charAt(i),temp);
+			}
+		}
 	}
 	
 	public void editRotorPermutation(){
@@ -624,9 +650,9 @@ public class BombeMachine{
 	public ArrayList<ArrayList<String>>	depthFirstSearch(HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu){
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		
-		for(char vertices:menu.keySet()){
+		for(char vertex:menu.keySet()){
 			ArrayList<String> temp= new ArrayList<String>();
-			temp.add(""+vertices);
+			temp.add(""+vertex);
 			ArrayList<ArrayList<String>> returnedPaths = depthFirstPathFinder(menu,temp);
 			
 			for(ArrayList<String> arr : returnedPaths){
@@ -640,7 +666,9 @@ public class BombeMachine{
 			//paths.addAll(returnedPaths);
 		}
 		//System.out.println(paths);
-		paths= removeClosuresInPaths(paths);
+		paths = removeClosuresInPaths(paths);
+		//System.out.println(paths);
+		paths = removePartialPaths(paths);
 		//System.out.println(paths);
 		//System.out.println(paths);
 		//normalise closures
@@ -672,7 +700,6 @@ public class BombeMachine{
 				}
 			}
 		}
-		
 		
 		return paths;
 	}
@@ -767,6 +794,95 @@ public class BombeMachine{
 			return closure;
 		}
 	}
+	
+	public ArrayList<ArrayList<String>> removePartialPaths(ArrayList<ArrayList<String>> paths){
+		for(int i=0; i<paths.size();i++){
+			ArrayList<String> arr = paths.get(i);
+			if(!(arr.get(0).equals(arr.get(arr.size()-1)))){
+				for(int j=0 ;j<paths.size();j++){
+					if(j!=i){
+						if(arr.size()<paths.get(j).size()){
+							int index=paths.get(j).indexOf(arr.get(0));
+							//System.out.println(index);
+							if(index!=-1){
+								int k=0;
+								boolean subPath = true;
+								while(k<arr.size()&&(index)<paths.get(j).size()&&subPath){
+									if(!arr.get(k).equals(paths.get(j).get(index))){
+										subPath=false;
+									}
+									k++;
+									index++;
+								}
+								
+								if(subPath){
+									ArrayList<String> temp = new ArrayList<String>();
+									temp.add("subPath");
+									temp.add("subPath");
+									paths.set(i,temp);
+									//break out of inner loop
+									j=paths.size();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		int i=0;
+		while(i<paths.size()){
+			if(paths.get(i).get(0).equals("subPath")){
+				paths.remove(i);
+			}
+			else{
+				i++;
+			}
+		}
+		
+		return paths;
+	}
+	
+	public void editCribOrCipher(){
+			
+			String input ="";
+			while(!(input.equals("menu"))){
+				System.out.println("Current crib is: "+crib);
+				System.out.println("Current ciphertext is: "+cipherText);				
+				System.out.println("1. edit crib");
+				System.out.println("2. edit cipherText");
+				System.out.println("Type menu to return to the main menu");
+				
+				input = scanner.nextLine();
+				if(input.equals("1")){
+					System.out.println("Type in the new crib");
+					crib=scanner.nextLine();
+				}
+				else if(input.equals("2")){
+					System.out.println("Type in the ciphertext");
+					cipherText=scanner.nextLine();
+				}
+			}
+	}
+	
+	public void generateClosuresAndTails(){
+			String input="";
+			while(!(input.equals("menu"))){
+				System.out.println("Current crib is: "+crib);
+				System.out.println("Current ciphertext is: "+cipherText);
+				System.out.println("input position of crib in the ciphertext");
+				System.out.println("Type menu to return to the main menu");
+				
+				input = scanner.nextLine();
+				
+				if(!(input.equals("menu"))){
+					int position = Integer.parseInt(input);
+					generateMenu(position);
+					System.out.println(depthFirstSearch(getMenu()));
+				}
+			}
+	}
+	
 	public void run(){
 		String input ="";
 		System.out.println("Current rotor permutation is: "+permutation);
@@ -776,15 +892,17 @@ public class BombeMachine{
 		closures.add("o,18,w,24,j,13,y,17");*/
 		
 		while(!(input.equals("quit"))){
-			System.out.println("1. rotor permutation settings");
-			System.out.println("2. input closures");
+			//System.out.println("1. rotor permutation settings");
+			System.out.println("1. input closures");
+			System.out.println("2. edit crib/ciphertext");
+			System.out.println("3. generate closures/tails");
 			System.out.println("type quit to exit");
 			
 			input = scanner.nextLine();
-			if(input.equals("1")){
-				editRotorPermutation();
+			if(input.equals("-1")){
+				//editRotorPermutation();
 			}
-			else if(input.equals("2")){
+			else if(input.equals("1")){
 				System.out.println("Current rotor permutation is: "+ permutation);
 				ArrayList<String> closures= new ArrayList<String>();
 				
@@ -806,6 +924,12 @@ public class BombeMachine{
 				
 				generatePlugboardSettings(closure, positions);*/
 			}
+			else if(input.equals("2")){
+				editCribOrCipher();
+			}
+			else if(input.equals("3")){
+				generateClosuresAndTails();
+			}
 		}
 	}
 	
@@ -819,7 +943,7 @@ public class BombeMachine{
 		list.add('5');
 		System.out.println(bombe.permutations(list,3));
 		bombe.changeRotorPermutation("b245");*/
-		HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
+		/*HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
 		HashMap<Character,ArrayList<Integer>> neighboursOfA = new HashMap<Character,ArrayList<Integer>>();
 		ArrayList<Integer> temp = new ArrayList<Integer>();
 		temp.add(1);
@@ -901,9 +1025,24 @@ public class BombeMachine{
 		menu.put('h', neighboursOfH);
 		
 		ArrayList<String> start = new ArrayList<String>();
-		start.add("a");
-		
-		System.out.println(bombe.depthFirstSearch(menu));
+		start.add("a");*/
+		ArrayList<String> temp = new ArrayList<String>();
+		//temp.add("a");
+		temp.add("b");
+		temp.add("c");
+		ArrayList<String> temp2 = new ArrayList<String>();
+		temp2.add("a");
+		temp2.add("b");
+		temp2.add("c");
+		ArrayList<ArrayList<String>> tempList= new ArrayList<ArrayList<String>>();
+		tempList.add(temp2);
+		tempList.add(temp);
+		System.out.println(bombe.removePartialPaths(tempList));
+		bombe.setCipherText("abcde");
+		bombe.setCrib("hello");
+		bombe.generateMenu(1);
+		System.out.println(bombe.depthFirstSearch(bombe.getMenu()));
+		//System.out.println();
 		bombe.run();
 	}
 }
