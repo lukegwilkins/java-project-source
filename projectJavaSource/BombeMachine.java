@@ -656,7 +656,9 @@ public class BombeMachine{
 			
 			//paths.addAll(returnedPaths);
 		}
+		//System.out.println(paths);
 		paths= removeClosuresInPaths(paths);
+		//System.out.println(paths);
 		//System.out.println(paths);
 		//normalise closures
 		for(int i =0;i<paths.size();i++){
@@ -697,9 +699,10 @@ public class BombeMachine{
 			ArrayList<String> arr = paths.get(i);
 			
 			if(arr.get(arr.size()-1).equals(arr.get(0))){
+				//System.out.println(arr);
 				for(int j=0; j<paths.size();j++){
-					if(j!=i){
-						if(paths.get(j).indexOf(arr.get(0))==paths.get(j).indexOf(arr.get(1))-1){
+					if(j!=i && !((paths.get(j).get(0)).equals(paths.get(j).get(paths.get(j).size()-1)))){
+						/*if(paths.get(j).indexOf(arr.get(0))==paths.get(j).indexOf(arr.get(1))-1){
 		
 							int index=0;
 							while(arr.get(index).equals(paths.get(j).get(index))){
@@ -710,10 +713,47 @@ public class BombeMachine{
 								paths.get(j).remove(0);
 							}
 						}
+						else{*/
+						//check if the path contains at least 2 nodes from the closure i, if it does mark it for removal
+						int noOfClosureNodes=0;
+						int k=0;
+						//size -1 has last element is a repeat of the first
+						while(k<arr.size()-1&& noOfClosureNodes < 2){
+							if(paths.get(j).contains(arr.get(k))){
+								//System.out.println(arr.get(k));
+								noOfClosureNodes++;
+							}
+							k+=2;
+						}
+						
+						if(noOfClosureNodes>=2){
+							//System.out.println(paths.get(j));
+							//System.out.println(j);
+							//mark array for removal and remove it later, not elegant better to replace with iterators
+							//but it works for now
+							ArrayList<String> temp = new ArrayList<String>();
+							temp.add("remove");
+							temp.add("remove");
+							paths.set(j,temp);
+							
+							
+						}
+						//}					
 					}
 				}
 			}
 		}
+		
+		int i=0;
+		while(i<paths.size()){
+			if(paths.get(i).get(0).equals("remove")){
+				paths.remove(i);
+			}
+			else{
+				i++;
+			}
+		}
+		
 		return paths;
 	}
 	
@@ -801,6 +841,7 @@ public class BombeMachine{
 		
 		neighboursOfA.put('b',1);
 		neighboursOfA.put('c',2);
+		neighboursOfA.put('g',7);
 		menu.put('a',neighboursOfA);
 		
 		HashMap<Character,Integer> neighboursOfB = new HashMap<Character,Integer>();
@@ -822,11 +863,22 @@ public class BombeMachine{
 		
 		HashMap<Character,Integer> neighboursOfE = new HashMap<Character,Integer>();
 		neighboursOfE.put('d',5);
+		neighboursOfE.put('f',8);
 		menu.put('e',neighboursOfE);
 		
 		HashMap<Character,Integer> neighboursOfF = new HashMap<Character,Integer>();
 		neighboursOfF.put('c',6);
+		neighboursOfF.put('e',8);
+		neighboursOfF.put('h',9);
 		menu.put('f',neighboursOfF);
+		
+		HashMap<Character,Integer> neighboursOfG = new HashMap<Character,Integer>();
+		neighboursOfG.put('a',7);
+		menu.put('g',neighboursOfG);
+		
+		HashMap<Character,Integer> neighboursOfH = new HashMap<Character,Integer>();
+		neighboursOfH.put('f',9);
+		menu.put('h', neighboursOfH);
 		
 		ArrayList<String> start = new ArrayList<String>();
 		start.add("a");
