@@ -10,7 +10,7 @@ public class BombeMachine{
 	private String crib;
 	private String cipherText;
 	private String permutation;
-	private ArrayList<char[]> menu;
+	private HashMap<Character,HashMap<Character,Integer>> menu;
 	private int cribPosition;
 	private Scanner scanner;
 	
@@ -70,7 +70,7 @@ public class BombeMachine{
 			}
 			menu.put((char)i,row);
 		}*/
-		menu = new ArrayList<char[]>();
+		menu = new HashMap<Character,HashMap<Character,Integer>>();
 		//System.out.println(menu);
 		permutation="A, 1, 2, 3";
 		
@@ -267,29 +267,13 @@ public class BombeMachine{
 	public void generateMenu(int position){
 		String cribCipher = cipherText.substring(position-1, position-1 + crib.length());
 		cribPosition=position;
-		menu = new ArrayList<char[]>();
-		/*HashMap<Character,HashSet<Integer>> row;
-		for(int i = 97;i<123;i++){
-			row = new HashMap<Character,HashSet<Integer>>();
-			for(int j = 97;j<123;j++){
-				HashSet<Integer> edges = new HashSet<Integer>();
-				row.put((char)j,edges);
+		menu = new HashMap<Character,HashMap<Character,Integer>>();
+		
+		/*for(i=0; i<crib.length();i++){
+			if(menu.containsKey(crib.charAt(i))){
+				menu.get(crib.charAt(i)).put(cribCipher.charAt())
 			}
-			menu.put((char)i,row);
 		}*/
-		
-		for(int i = 0;i<crib.length();i++){
-			char cribChar = crib.charAt(i);
-			char cribCipherChar = cribCipher.charAt(i);
-			//menu.get(cribChar).get(cribCipherChar).add(position+i);
-			//menu.get(cribCipherChar).get(cribChar).add(position+i);
-			menu.add(new char[]{cribChar,cribCipherChar});
-		}
-		
-		
-		for(char[] letters: menu){
-			System.out.println(letters[0]+", "+letters[1]);
-		}
 	}
 	
 	public void editRotorPermutation(){
@@ -603,28 +587,27 @@ public class BombeMachine{
 		}
 	}
 	
-	public ArrayList<ArrayList<String>> depthFirstPathFinder(HashMap<Character,HashMap<Character,Integer>> menu,ArrayList<String> path){
+	public ArrayList<ArrayList<String>> depthFirstPathFinder(HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu,ArrayList<String> path){
 			char startingChar=path.get(path.size()-1).charAt(0);
 			ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 			
 			for(char neighbour:menu.get(startingChar).keySet()){
-				ArrayList<String> newPath = new ArrayList<String>(path);
-				newPath.add(""+menu.get(startingChar).get(neighbour));
-				newPath.add(""+neighbour);
-				
-				if(path.size()>1){
-					if(neighbour!=path.get(path.size()-3).charAt(0)){
-						if(path.contains(""+neighbour)){
+				for(int position:menu.get(startingChar).get(neighbour)){
+					ArrayList<String> newPath = new ArrayList<String>(path);
+					newPath.add(""+position);
+					newPath.add(""+neighbour);
+					
+					if(path.size()>1){
+						if(path.contains(""+neighbour)&&!path.contains(""+position)){
 							paths.add(newPath);
 						}
-						else{							
-							paths.addAll(depthFirstPathFinder(menu,newPath));
-							
+						else if(!path.contains(""+position)){
+							paths.addAll(depthFirstPathFinder(menu,newPath));								
 						}
 					}
-				}
-				else{
-					paths.addAll(depthFirstPathFinder(menu,newPath));
+					else{
+						paths.addAll(depthFirstPathFinder(menu,newPath));
+					}
 				}
 			}
 			
@@ -638,7 +621,7 @@ public class BombeMachine{
 			}
 	}
 	
-	public ArrayList<ArrayList<String>>	depthFirstSearch(HashMap<Character,HashMap<Character,Integer>> menu){
+	public ArrayList<ArrayList<String>>	depthFirstSearch(HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu){
 		ArrayList<ArrayList<String>> paths = new ArrayList<ArrayList<String>>();
 		
 		for(char vertices:menu.keySet()){
@@ -695,6 +678,7 @@ public class BombeMachine{
 	}
 	
 	public ArrayList<ArrayList<String>> removeClosuresInPaths(ArrayList<ArrayList<String>> paths){
+		
 		for(int i=0;i<paths.size();i++){
 			ArrayList<String> arr = paths.get(i);
 			
@@ -742,9 +726,8 @@ public class BombeMachine{
 					}
 				}
 			}
-		}
-		
-		int i=0;
+		}		
+		int i=0;		
 		while(i<paths.size()){
 			if(paths.get(i).get(0).equals("remove")){
 				paths.remove(i);
@@ -836,48 +819,85 @@ public class BombeMachine{
 		list.add('5');
 		System.out.println(bombe.permutations(list,3));
 		bombe.changeRotorPermutation("b245");*/
-		HashMap<Character,HashMap<Character,Integer>> menu = new HashMap<Character,HashMap<Character,Integer>>();
-		HashMap<Character,Integer> neighboursOfA = new HashMap<Character,Integer>();
-		
-		neighboursOfA.put('b',1);
-		neighboursOfA.put('c',2);
-		neighboursOfA.put('g',7);
+		HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
+		HashMap<Character,ArrayList<Integer>> neighboursOfA = new HashMap<Character,ArrayList<Integer>>();
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		temp.add(1);
+		neighboursOfA.put('b',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(2);
+		neighboursOfA.put('c',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(7);
+		neighboursOfA.put('g',temp);
 		menu.put('a',neighboursOfA);
 		
-		HashMap<Character,Integer> neighboursOfB = new HashMap<Character,Integer>();
-		neighboursOfB.put('a',1);
-		neighboursOfB.put('d',3);
+		HashMap<Character,ArrayList<Integer>> neighboursOfB = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(1);
+		neighboursOfB.put('a',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(3);
+		neighboursOfB.put('d',temp);
 		menu.put('b',neighboursOfB);
 		
-		HashMap<Character,Integer> neighboursOfC = new HashMap<Character,Integer>();
-		neighboursOfC.put('a',2);
-		neighboursOfC.put('d',4);
-		neighboursOfC.put('f',6);
+		HashMap<Character,ArrayList<Integer>> neighboursOfC = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(2);
+		neighboursOfC.put('a',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(4);
+		neighboursOfC.put('d',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(6);
+		neighboursOfC.put('f',temp);
 		menu.put('c',neighboursOfC);
 		
-		HashMap<Character,Integer> neighboursOfD = new HashMap<Character,Integer>();
-		neighboursOfD.put('b',3);
-		neighboursOfD.put('c',4);
-		neighboursOfD.put('e',5);
+		HashMap<Character,ArrayList<Integer>> neighboursOfD = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(3);
+		neighboursOfD.put('b',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(4);
+		neighboursOfD.put('c',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(5);
+		temp.add(10);
+		neighboursOfD.put('e',temp);
 		menu.put('d',neighboursOfD);
 		
-		HashMap<Character,Integer> neighboursOfE = new HashMap<Character,Integer>();
-		neighboursOfE.put('d',5);
-		neighboursOfE.put('f',8);
+		HashMap<Character,ArrayList<Integer>> neighboursOfE = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(5);
+		temp.add(10);
+		neighboursOfE.put('d',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(8);
+		neighboursOfE.put('f',temp);
 		menu.put('e',neighboursOfE);
 		
-		HashMap<Character,Integer> neighboursOfF = new HashMap<Character,Integer>();
-		neighboursOfF.put('c',6);
-		neighboursOfF.put('e',8);
-		neighboursOfF.put('h',9);
+		HashMap<Character,ArrayList<Integer>> neighboursOfF = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(6);
+		neighboursOfF.put('c',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(8);
+		neighboursOfF.put('e',temp);
+		temp = new ArrayList<Integer>();
+		temp.add(9);
+		neighboursOfF.put('h',temp);
 		menu.put('f',neighboursOfF);
 		
-		HashMap<Character,Integer> neighboursOfG = new HashMap<Character,Integer>();
-		neighboursOfG.put('a',7);
+		HashMap<Character,ArrayList<Integer>> neighboursOfG = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(7);
+		neighboursOfG.put('a',temp);
 		menu.put('g',neighboursOfG);
 		
-		HashMap<Character,Integer> neighboursOfH = new HashMap<Character,Integer>();
-		neighboursOfH.put('f',9);
+		HashMap<Character,ArrayList<Integer>> neighboursOfH = new HashMap<Character,ArrayList<Integer>>();
+		temp = new ArrayList<Integer>();
+		temp.add(9);
+		neighboursOfH.put('f',temp);
 		menu.put('h', neighboursOfH);
 		
 		ArrayList<String> start = new ArrayList<String>();
