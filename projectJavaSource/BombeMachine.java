@@ -878,7 +878,22 @@ public class BombeMachine{
 				if(!(input.equals("menu"))){
 					int position = Integer.parseInt(input);
 					generateMenu(position);
-					System.out.println(depthFirstSearch(getMenu()));
+					
+					ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+					ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+					ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
+					
+					for(ArrayList<String> path: paths){
+						if(path.get(0).equals(path.get(path.size()-1))){
+							closures.add(path);
+						}
+						else{
+							tails.add(path);
+						}
+					}
+					
+					System.out.println("Closures are: "+closures);
+					System.out.println("Tails are: "+ tails);
 				}
 			}
 	}
