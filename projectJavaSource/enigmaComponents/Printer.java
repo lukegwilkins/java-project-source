@@ -1,8 +1,11 @@
 package enigmaComponents;
 
+//simple class that we use for printing encryption information out in a nice formatted manner
 public class Printer{
+	//number of tabs
 	private int noOfTabs;
 	
+	//constructor
 	public Printer(){
 		noOfTabs=0;
 	}
@@ -17,6 +20,7 @@ public class Printer{
 		}
 	}
 	
+	//prints however manner tabs there are and then whattever was passed as input
 	public void print(String string){
 		String output="";
 		for(int i=0;i<noOfTabs;i++){
