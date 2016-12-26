@@ -466,35 +466,43 @@ public class EnigmaMachine{
 		}
 	}
 	
-	
+	//method that is called if the user chooses to edit the rotor settings
 	public void editRotorSettingsMenu(){
 		String input = "";
 		
+		//if menu is inputted then the program returns to the previous menu
 		while(!(input.equals("menu"))){
-			
+			//output the numbers for each rotor
 			System.out.println("Which rotor do you wish to edit.\n 1, 2, 3, 4 or 5\nType menu to return to the previous menu");
+			//get input
 			input = scanner.nextLine();
 			try{
 				if(!(input.equals("menu"))){
-					
+					//if the number isn't between 1 and 5 we output an error message
 					int rotor = Integer.parseInt(input);
 					if(rotor<1 || rotor>5 ){
 						System.out.println("the rotor number must bet between 1 and 5");
 					}
 					else{
+						//we call the method that is used to edit the rotor settings for the inputted rotor
 						editRotorSettings(rotor);
 					}
 				}
 			}
+			//if a number isn't inputted then an error message is outputted
 			catch(Exception e){
 				System.out.println("you have to input a number");
 			}
 		}
 	}
 	
+	//method that is used to edit a rotor's settings
 	public void editRotorSettings(int rotor){
 		String input = "";
+		//if menu is inputted the program returns to the previous menu
 		while(!(input.equals("menu"))){
+			
+			//outputs the options menu for editing a rotor
 			System.out.println("Editing "+rotor);							
 			System.out.println("1. view circuitry");
 			System.out.println("2. edit circuitry");
@@ -507,115 +515,167 @@ public class EnigmaMachine{
 			System.out.println("Type menu to return to rotor menu");
 			
 			try{
+				//gets the input
 				input = scanner.nextLine();
 				if(!(input.equals("menu"))){
+					//if 1 is inputted then the program displays the rotors circuitry
 					if(input.equals("1")){
 						System.out.println("Circuitry is:\n"+"ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"+(new String(rotors[rotor-1].getCharCircuitry())));
 					}
+					
+					//if 2 is inputted then the user inputs the new circuitry and the program sets the rotors circuitry to the inputted circuitry
 					else if(input.equals("2")){
+						//gets the circuitry as a string then converts it to an array
 						System.out.println("Input the circuit as a list, with the first entry been what A encrypts to, the second entry been what B encrypts to etc.\ne.g. if you wanted to map A to C & B to K, you'd put CK... followed by the rest of the mapping");
 						input=scanner.nextLine();
 						char[] circuit = input.toCharArray();
 						rotors[rotor-1].setCircuitry(circuit);
 					}
+					
+					//if 3 is pressed then the rotor's position is outputted
 					else if(input.equals("3")){
 						System.out.println("Position is:\n"+rotors[rotor-1].getPosition());
 					}
+					
+					//if 4 is pressed then the user is prompted for the rotor's new position
 					else if (input.equals("4")){
 						System.out.println("Input the position as a character or an integer");
+						//gets input
 						input = scanner.nextLine();
+						
+						//attempts to set the position as an integer
 						try{
 							int position = Integer.parseInt(input);
 							rotors[rotor-1].setPosition(position);
 						}
+						//else it sets the position using the first char in the string
 						catch(Exception e){
 							char position = input.charAt(0);
 							rotors[rotor-1].setPosition(position);
 						}
 					}
+					
+					//if the user inputs 5 then the rotor's ring position is displayed
 					else if(input.equals("5")){
 						System.out.println("Ring position is:\n" + rotors[rotor-1].getRingPosition());
 					}
+					
+					//if the user inputs 6 then the user is prompted for the new ring position
 					else if(input.equals("6")){
+						
 						System.out.println("Input the ring position");
 						input = scanner.nextLine();
 						int ringPosition = Integer.parseInt(input);
 						rotors[rotor-1].setRingPosition(ringPosition);
 					}
+					
+					//if the user inputs 7 then the user then the turnover char for the rotor is displayed
 					else if(input.equals("7")){
 						System.out.println("The turnover char is:\n"+rotors[rotor-1].getTurnoverChar());
 					}
+					
+					//if the user inputs 8 then the user inputs the new turnover char for the rotor
 					else if(input.equals("8")){
+						
 						System.out.println("Input the turnover char");
 						input = scanner.nextLine();
 						rotors[rotor-1].setTurnoverChar(input.charAt(0));
 					}
+					
+					//else an error message is outputted
 					else{						
 						System.out.println("Invalid input");
 					}
 				}
 			}
+			
+			//if any setting of the rotors settings throws an error than an error message is outputted 
 			catch(Exception e){
 				System.out.println("Invalid input");
 			}
-		}
-		
+		}		
 	}
 	
+	//method that is called when the user wants to edit the rotor permuations
 	public void editRotorPermutation(){
 		String input="";
 		while(!(input.equals("menu"))){
+			//outputs the options
 			System.out.println("1. view permutation");
 			System.out.println("2. edit permutation");
 			System.out.println("Type menu to return to the main menu");
 			
+			//gets the users input
 			input = scanner.nextLine();
+			
+			//if 1 is inputted then the rotors permutation is outputted
 			if(input.equals("1")){
 				
 				System.out.println("The permutation is "+permutation);
 			}
+			
+			//if 2 is inputted then the user inputs the new rotor permutation
 			else if(input.equals("2")){
 				
 				System.out.println("Input the permutation, e.g. input A, 4, 3, 5 if you want rotor 5 as the right rotor, 3 as the middle, 4 as the left and reflector A as the reflector");
 				
+				//gets the input
 				input = scanner.nextLine();
+				//removes whitespace from the input
 				input = input.replaceAll("\\s+","");
+				
+				//splits the input by commas
 				String[] stringPositions = input.split(",");
 				
+				//checks that a reflector and 3 rotors were inputted in the permuation
 				if(stringPositions.length !=4){
 					
 					System.out.println("Invalid permutation");					
 				}
 				else{
+					
 					String temp = permutation;
 					
 					try{
+						//set the rotor of the left to be the last rotor in the string
 						int rotor = Integer.parseInt(stringPositions[3]);
 						Rotor prevRotor = rotors[rotor-1];
 						Rotor firstRotor = prevRotor;
 						
+						//disable the doublestep
 						firstRotor.disableDoubleStep();
+						
+						//stores the permutation as it is been processed
 						permutation= "" + rotor;
 						
+						//sets the rotor in the middle and right 
 						for(int i=2; i>0;i--){
 							rotor = Integer.parseInt(stringPositions[i]);
+							//sets the previous rotor to point to the next rotor
 							prevRotor.setNextRotor(rotors[rotor-1]);
 							prevRotor = rotors[rotor-1];
+							//stores the permutation as it is been processed
 							permutation=""+rotor+", "+permutation;
 							prevRotor.disableDoubleStep();
 						}
 						
+						//gets the reflector used 
 						String reflectorString = stringPositions[0];
 						permutation= reflectorString + ", "+ permutation;
 						
 						char reflectorChar = reflectorString.charAt(0);
 						
+						//has the left rotor point to the reflector
 						Reflector reflector = reflectors[(int)Character.toLowerCase(reflectorChar) - 97];
 						prevRotor.setNextRotor(reflector);
 						
+						//enables doublestep for the middle rotor
 						((Rotor)firstRotor.getNextRotor()).enableDoubleStep();
+						
+						//sets the scrambler to point to the first rotor/rotor on the right
 						scrambler.setFirstRotor(firstRotor);
 					}
+					//if an error occurs an error message is output
 					catch(Exception e){
 						System.out.println("That permutation is invalid");
 						permutation = temp;
@@ -626,17 +686,24 @@ public class EnigmaMachine{
 		}
 	}
 	
+	//method for setting the plugboard settings
 	public void editPlugboardSettings(){
 		String input="";
 		while(!(input.equals("menu"))){
+			
+			//outputs the menu options
 			System.out.println("1. view plugboard settings");
 			System.out.println("2. swap two letters");
 			System.out.println("3. unswap two letters");
 			System.out.println("4. reset plugboard");
 			System.out.println("5. edit entire plugboard settings");
+			
+			//gets the input
 			input = scanner.nextLine();
 			
 			try{
+				
+				//if 1 is selected then the current plugboard setting is shown
 				if(input.equals("1")){
 					
 					ArrayList<String> plugboardSettings = plugboard.getSwapMapping();
@@ -653,6 +720,8 @@ public class EnigmaMachine{
 					}
 					
 				}
+				
+				//if 2 is selected then the user inputs the 2 letters to be swapped
 				else if(input.equals("2")){
 					
 					System.out.println("Input first character");
@@ -667,6 +736,8 @@ public class EnigmaMachine{
 					
 					plugboard.swap(firstCharacter, secondCharacter);
 				}
+				
+				//if 3 is selected then the user inputs the 2 letters to be unswapped
 				else if(input.equals("3")){
 					
 					System.out.println("Input first character to unswap");
@@ -681,46 +752,66 @@ public class EnigmaMachine{
 					
 					plugboard.unswap(firstCharacter, secondCharacter);
 				}
+				
+				//if 4 is selected the plugboard is reset
 				else if(input.equals("4")){
 					
 					plugboard.resetMapping();
 				}
+				
+				//if 5 is selected then the entire letter swaps are input all at once
 				else if(input.equals("5")){
+					//outputs how the settings should be inputted
 					System.out.println("Input the swapping as a list where each \"swap\" is the first letter/the second letter e.g. inputting A/C, F/T would swap A with C and F with T.");
 					
+					//gets the input
 					input = scanner.nextLine();
+					//removes the whitespace
 					input = input.replaceAll("\\s+","");
 					
+					//splits the string into an array
 					String[] settingsStringArray = input.split(",");
 					ArrayList<String> swapSettings = new ArrayList<String>(Arrays.asList(settingsStringArray));
 					
+					//sets the plugboard setting
 					plugboard.setSwapMapping(swapSettings);
 				}
+				
+				//if the input is invalid an error message is shown
 				else{
 					System.out.println("Invalid input");
 				}
 			}
+			
+			//if an error occurs the error message is outputted
 			catch(IllegalArgumentException e){
 				System.out.println(e.getMessage());
 			}
 		}
 	}
 	
+	//method for additional options
 	public void additionalOptions(){
 		
 		String input ="";
 		while(!(input.equals("menu"))){
+			
+			//outputs the menu
 			System.out.println("1. enable/disable additional encrypting information");
 			System.out.println("2. enable/disable cracking mode");
 			System.out.println("type menu to return to the main menu");
 			
+			//gets the input
 			input = scanner.nextLine();
 			if(!(input.equals("menu"))){
+				
+				//if 1 is inputted then the additional encrypyting info menu is called
 				if(input.equals("1")){
 					
-					additionalEncyptingInfoMenu();
+					additionalEncryptingInfoMenu();
 					
 				}
+				//if 2 is inputted then the cracking mode menu is called
 				else if(input.equals("2")){
 					
 					crackingModeMenu();
@@ -731,7 +822,10 @@ public class EnigmaMachine{
 		
 	}
 	
-	public void additionalEncyptingInfoMenu(){
+	//method for the additional encrypting  info menu
+	public void additionalEncryptingInfoMenu(){
+		
+		//outputs whether additional encrypting info is enabled or not
 		if(plugboard.printerEnabled()){
 			System.out.println("Additional encrypting information is enabled");
 		}
@@ -741,17 +835,23 @@ public class EnigmaMachine{
 			
 		}
 		
+		//outputs the menu options
 		System.out.println("1. enable additional encrypting information");
 		System.out.println("2. disable additional encrypting information");
 		System.out.println("type menu to return to the previous menu");
 		
+		//gets the next input line
 		String input=scanner.nextLine();
+		
+		//if 1 is inputted then the printer is enabled for the plugboard
 		if(input.equals("1")){
 			
 			plugboard.enablePrinter();
 			System.out.println("Additional encrypting information is enabled");
 			
 		}
+		
+		//if 2 is inputted then the printer is disabled
 		else if(input.equals("2")){
 			
 			plugboard.disablePrinter();
@@ -766,7 +866,10 @@ public class EnigmaMachine{
 		
 	}
 	
+	//method for the cracking mode menu
 	public void crackingModeMenu(){
+		
+		//outputs whether the cracking mode is enabled or not
 		if(scrambler.getCrackingMode()){
 			
 			System.out.println("Cracking mode is currently enabled");
@@ -778,17 +881,23 @@ public class EnigmaMachine{
 			
 		}
 		
+		//outputs the options menu
 		System.out.println("1. enable cracking mode");
 		System.out.println("2. disable cracking mode");
 		System.out.println("type menu to return to the previous menu");
 		
+		//gets the user input
 		String input = scanner.nextLine();
+		
+		//if 1 is inputted then the cracking mode is enabled 
 		if(input.equals("1")){
 			
 			scrambler.setCrackingMode(true);
 			System.out.println("cracking mode enabled");
 			
 		}
+		
+		//if 2 is inputted then the cracking mode is disabled
 		else if(input.equals("2")){
 			
 			scrambler.setCrackingMode(false);
@@ -803,6 +912,7 @@ public class EnigmaMachine{
 		
 	}
 	
+	//main method that calls the run method
 	public static void main(String args[]){
 		EnigmaMachine enigmaMachine = new EnigmaMachine();
 		enigmaMachine.Run();
