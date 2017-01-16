@@ -1056,41 +1056,76 @@ public class BombeMachine{
 	
 	//generates closures and tails for the current crib and ciphertext
 	public void generateClosuresAndTails(){
-			String input="";
-			while(!(input.equals("menu"))){
-				//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
-				System.out.println("Current crib is: "+crib);
-				System.out.println("Current ciphertext is: "+cipherText);
-				System.out.println("input position of crib in the ciphertext");
-				System.out.println("Type menu to return to the main menu");
+		String input="";
+		while(!(input.equals("menu"))){
+			//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
+			System.out.println("Current crib is: "+crib);
+			System.out.println("Current ciphertext is: "+cipherText);
+			System.out.println("input position of crib in the ciphertext");
+			System.out.println("Type menu to return to the main menu");
+			
+			input = scanner.nextLine();
+			
+			if(!(input.equals("menu"))){
+				int position = Integer.parseInt(input);
+				//generates the menu for the crib and ciphertext at the inputted position
+				generateMenu(position);
 				
-				input = scanner.nextLine();
+				//gets the paths for the menu
+				ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+				ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+				ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
 				
-				if(!(input.equals("menu"))){
-					int position = Integer.parseInt(input);
-					//generates the menu for the crib and ciphertext at the inputted position
-					generateMenu(position);
-					
-					//gets the paths for the menu
-					ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
-					ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
-					ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
-					
-					//splits the paths into closures and tails
-					for(ArrayList<String> path: paths){
-						if(path.get(0).equals(path.get(path.size()-1))){
-							closures.add(path);
-						}
-						else{
-							tails.add(path);
-						}
+				//splits the paths into closures and tails
+				for(ArrayList<String> path: paths){
+					if(path.get(0).equals(path.get(path.size()-1))){
+						closures.add(path);
 					}
+					else{
+						tails.add(path);
+					}
+				}
+				
+				//outputs them
+				System.out.println("Closures are: ");
+				for(int i=0;i<closures.size();i++){
+					System.out.println(""+(i+1)+". "+closures.get(i));
+				}
+				System.out.println("Tails are: "+ tails);
+				
+				//prompts user for which closures to use for cracking the enigma machine
+				while(!(input.equals("menu"))){
+					System.out.println("Type menu to go back to the main menu");
+					System.out.println("Or type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
 					
-					//outputs them
-					System.out.println("Closures are: "+closures);
-					System.out.println("Tails are: "+ tails);
+					//gets input
+					input=scanner.nextLine();
+					if(!(input.equals("menu"))){
+						//remove spaces
+						input=input.replaceAll("\\s+","");
+					
+						ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+						String[] closureNumbers=input.split(",");
+					
+						for(String closureNumber:closureNumbers){
+							//gets the closure index
+							int index = Integer.parseInt(closureNumber)-1;
+							String closure = closures.get(index).get(0);
+							
+							//converts the closure to a string
+							for(int i=1;i<closures.get(index).size()-1;i++){
+								closure=closure+","+closures.get(index).get(i);
+							}
+							
+							//adds the closure to the array list
+							closuresToBeUsed.add(closure);
+						}
+						
+						System.out.println(closuresToBeUsed);
+					}
 				}
 			}
+		}
 	}
 	
 	//method to set what reflectors will be used in cracking
@@ -1155,7 +1190,7 @@ public class BombeMachine{
 				while(!input.equals("end")){
 					System.out.println("Input a closure");
 					System.out.println("Type end when you have input all closures.");
-					input = scanner.nextLine();
+					input = scanner.nextLine().toLowerCase();
 					if(!input.equals("end")){
 						closures.add(input);
 					}
