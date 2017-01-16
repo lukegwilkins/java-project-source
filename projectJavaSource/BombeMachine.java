@@ -14,6 +14,7 @@ public class BombeMachine{
 	private HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu;
 	private int cribPosition;
 	private Scanner scanner;
+	private ArrayList<Character> useableReflectors;
 	
 	//constructor for the BombeMachine
 	public BombeMachine(){
@@ -80,6 +81,12 @@ public class BombeMachine{
 		
 		//sets up a new scanner
 		scanner= new Scanner(System.in);
+		
+		//stores which reflectors may be used for cracking
+		useableReflectors= new ArrayList<Character>();
+		useableReflectors.add('a');
+		useableReflectors.add('b');
+		useableReflectors.add('c');
 	}
 	
 	//method to get the crib
@@ -89,7 +96,7 @@ public class BombeMachine{
 	
 	//method to set the crib
 	public void setCrib(String crib){
-		this.crib = crib.replaceAll("\\s+","");;
+		this.crib = crib.replaceAll("\\s+","");
 	}
 	
 	//method to get the ciphertext
@@ -720,8 +727,7 @@ public class BombeMachine{
 		ArrayList<ArrayList<Character>> rotorPermutations= permutations(temp,3);
 		
 		//we go through all permutations with the reflector as each of the reflectors
-		char[] reflectors = {'a','b','c'};
-		for(char reflector: reflectors){			
+		for(char reflector: useableReflectors){			
 			for(ArrayList<Character> permutation: rotorPermutations){
 				String rotorPermutation=""+reflector;
 				
@@ -1087,6 +1093,34 @@ public class BombeMachine{
 			}
 	}
 	
+	//method to set what reflectors will be used in cracking
+	public void setUseableReflectors(){
+		
+		String input ="";
+		System.out.println("made this prettier.\nCurrent reflectors are "+useableReflectors);
+		
+		while(!(input.equals("menu"))){
+			System.out.println("Current Reflectors for use are a,b,c.");
+			System.out.println("Input which reflectors you want to use, e.g. if you want to use just a, type a, if you want to use a and b type a,b");
+			System.out.println("Type menu to exit");
+			
+			//gets input and splits it by comma
+			input=scanner.nextLine();
+			if(!(input.equals("menu"))){
+				input = input.replaceAll("\\s+","");
+				String[] inputtedReflectors=input.split(",");
+			
+				//makes a new ArrayList object and adds each reflector to it
+				useableReflectors=new ArrayList<Character>();
+				for(String reflector:inputtedReflectors){
+					useableReflectors.add(reflector.charAt(0));
+				}
+			
+				System.out.println(useableReflectors);
+			}
+		}
+	}
+	
 	//run method for the bombe
 	public void run(){
 		String input ="";
@@ -1102,6 +1136,7 @@ public class BombeMachine{
 			System.out.println("1. input closures");
 			System.out.println("2. edit crib/ciphertext");
 			System.out.println("3. generate closures/tails");
+			System.out.println("4. input reflectors for use in cracking");
 			System.out.println("type quit to exit");
 			
 			//prompts the user for input 
@@ -1134,9 +1169,14 @@ public class BombeMachine{
 			else if(input.equals("2")){
 				editCribOrCipher();
 			}
+			
 			//else if they inputted 3 then they are taken to automatic generation of closures menu
 			else if(input.equals("3")){
 				generateClosuresAndTails();
+			}
+			//else if they inputted 4 then they are taken to the reflector menu
+			else if(input.equals("4")){
+				setUseableReflectors();
 			}
 		}
 	}
