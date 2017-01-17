@@ -604,6 +604,71 @@ public class BombeMachine{
 		}
 	}
 	
+	public HashMap<Character,Character> tailSettings(char rightRotorPos, HashMap<Character,Character> plugboardSettings, ArrayList<ArrayList<String>> tails){
+		//don't need to set left and middle rotor since they are already done in crackClosures, make sure this is true or change if this changes in the future
+		ArrayList<HashMap<Character,Character>> tailsPlugboardSettings = new ArrayList<HashMap<Character,Character>>();
+			
+		for(ArrayList<String> tail:tails){
+			HashMap<Character,Character> temp = settingsFromTail(rightRotorPos, plugboardSettings, tail);
+			if(temp.isEmpty()){
+				System.out.println("A tail was inconsistent");
+				return new HashMap<Character,Character>();
+			}
+			else{
+				tailsPlugboardSettings.add(temp);
+			}
+		}
+		tailsPlugboardSettings.add(plugboardSettings);
+		HashMap<Character, Character> returnSettings = attemptToMergeSettings(tailsPlugboardSettings);
+		System.out.println(returnSettings);
+		return returnSettings;	
+	}
+	
+	public HashMap<Character,Character> settingsFromTail(char rightRotorPos, HashMap<Character,Character> plugboardSettings, ArrayList<String> tail){
+		System.out.println(tail);
+		HashMap<Character,Character> settings = new HashMap<Character,Character>();
+		
+		Rotor firstRotor = (Rotor) scrambler.getFirstRotor();
+		settings.put(plugboardSettings.get(tail.get(0).charAt(0)),tail.get(0).charAt(0));
+		settings.put(tail.get(0).charAt(0),plugboardSettings.get(tail.get(0).charAt(0)));
+		
+		System.out.println(settings);
+		
+		scrambler.setCrackingMode(true);
+		for(int i=1;i<tail.size();i+=2){
+			System.out.println(tail.get(i)+","+tail.get(i-1)+tail.get(i+1));
+			//rotate then encrypt
+			char currentRightPos = (char)(((int)Character.toLowerCase(rightRotorPos)%97+Integer.parseInt(tail.get(i)))%26 + 97);
+			
+			firstRotor.setPosition(currentRightPos);
+			//System.out.println(firstRotor.getCharOnTop());
+			char swap=scrambler.encrypt(settings.get(tail.get(i-1).charAt(0)));
+			System.out.println(swap);
+			
+			//check that if the original settings contain either swap or the current character, then the current char and swap must be swapped
+			//otherwise return an empty hashmap and output an error message
+			if(plugboardSettings.containsKey(tail.get(i+1).charAt(0))){				
+				if(!(plugboardSettings.get(tail.get(i+1).charAt(0)).equals(swap))){
+					//System.out.println("tail is inconsistent");
+					return new HashMap<Character,Character>();
+				}
+			}
+			else if(plugboardSettings.containsKey(swap)){
+				if(!(plugboardSettings.get(swap).equals(tail.get(i+1).charAt(0)))){
+					//System.out.println("tail is inconsistent");
+					return new HashMap<Character,Character>();
+				}
+			}
+			
+			settings.put(tail.get(i+1).charAt(0),swap);
+			settings.put(swap,tail.get(i+1).charAt(0));
+		}
+		System.out.println(settings);
+		
+		return settings;
+	}
+	
+	//attempts to merge plugboardSettings
 	public HashMap<Character,Character> attemptToMergeSettings(ArrayList<HashMap<Character,Character>> settings){
 		
 		//for each settings in the list we check it is consistent with all other settings
@@ -1088,6 +1153,7 @@ public class BombeMachine{
 				
 				//outputs them
 				System.out.println("Closures are: ");
+				//make closures nicer
 				for(int i=0;i<closures.size();i++){
 					System.out.println(""+(i+1)+". "+closures.get(i));
 				}
@@ -1122,6 +1188,9 @@ public class BombeMachine{
 						}
 						
 						System.out.println(closuresToBeUsed);
+						
+						//cracks enigma using the closures
+						crackEnigma(closuresToBeUsed);
 					}
 				}
 			}
@@ -1327,6 +1396,35 @@ public class BombeMachine{
 		bombe.generateMenu(1);
 		System.out.println(bombe.depthFirstSearch(bombe.getMenu()));
 		//System.out.println();*/
+		HashMap<Character,Character> temp = new HashMap<Character,Character>();
+		temp.put('a','b');
+		temp.put('b','a');
+		temp.put('n','z');
+		temp.put('z','n');
+		//temp.put('o','k');
+		//temp.put('k','o');
+		//temp.put('k','z');
+		//temp.put('z','k');
+		
+		ArrayList<String> tempTail = new ArrayList<String>();
+		tempTail.add("b");
+		tempTail.add("3");
+		tempTail.add("c");
+		tempTail.add("5");
+		tempTail.add("d");
+		
+		ArrayList<String> tempTailTwo = new ArrayList<String>();
+		tempTailTwo.add("a");
+		tempTailTwo.add("4");
+		tempTailTwo.add("f");
+		tempTailTwo.add("1");
+		tempTailTwo.add("m");
+		
+		ArrayList<ArrayList<String>> tails = new ArrayList<ArrayList<String>>();
+		tails.add(tempTail);
+		tails.add(tempTailTwo);
+		
+		bombe.tailSettings('a',temp,tails);
 		bombe.run();
 	}
 }
