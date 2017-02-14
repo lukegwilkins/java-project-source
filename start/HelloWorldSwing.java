@@ -1,5 +1,6 @@
 package start;
 import javax.swing.*;        
+import java.awt.Color;
 
 public class HelloWorldSwing {
     /**
@@ -15,9 +16,11 @@ public class HelloWorldSwing {
         //Add the ubiquitous "Hello World" label.
         JLabel label = new JLabel("Hello World");
         frame.getContentPane().add(label);
-
+		frame.getContentPane().setBackground(Color.WHITE);
+		
         //Display the window.
-        frame.pack();
+        //frame.pack();
+		frame.setSize(500,300);
         frame.setVisible(true);
     }
 

@@ -446,7 +446,8 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the closures
-	public void crackClosures(ArrayList<String> closures){
+	public void crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
+		//System.out.println(tails);
 		//stores the rotor positions and sets up the initial positions
 		String rotorPositions;
 		char leftRotorPos='a';
@@ -555,25 +556,29 @@ public class BombeMachine{
 						//if consistentMergedPlugboardSettings is not empty then we output the rotor permutation and positions
 						//and each of the plugboard settigns
 						if(!consistentMergedPlugboardSettings.isEmpty()){
-							System.out.println("rotor permutation is "+permutation);
-							System.out.println("rotor positions are "+rotorPositions);
 							String outputString;
 							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
 								outputString="";
 								
-								//for each of the plugboard settings it converts it to a string and outputs it
-								for(Character key: plugboardSettings.keySet()){
-									if(outputString.indexOf(key)==-1){
-										if((int)key < (int)plugboardSettings.get(key)){
-											outputString+=key+"/"+plugboardSettings.get(key)+", ";
-										}
-										else{
-											outputString+=plugboardSettings.get(key)+"/"+key+", ";
+								HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
+								
+								if(!(settingsWithTails.isEmpty())){
+									System.out.println("rotor permutation is "+permutation);
+									System.out.println("rotor positions are "+rotorPositions);
+									//for each of the plugboard settings it converts it to a string and outputs it
+									for(Character key: settingsWithTails.keySet()){
+										if(outputString.indexOf(key)==-1){
+											if((int)key < (int)settingsWithTails.get(key)){
+												outputString+=key+"/"+settingsWithTails.get(key)+", ";
+											}
+											else{
+												outputString+=settingsWithTails.get(key)+"/"+key+", ";
+											}
 										}
 									}
+									outputString=outputString.substring(0,outputString.length()-2);
+									System.out.println(outputString);
 								}
-								outputString=outputString.substring(0,outputString.length()-2);
-								System.out.println(outputString);
 							}
 						}
 					}
@@ -584,8 +589,7 @@ public class BombeMachine{
 					System.out.println("rotor positions are "+rotorPositions);
 					String outputString;			
 					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
-						outputString="";
-								
+						outputString="";	
 						for(Character key: plugboardSettings.keySet()){
 							if(outputString.indexOf(key)==-1){
 								if((int)key < (int)plugboardSettings.get(key)){
@@ -604,10 +608,14 @@ public class BombeMachine{
 		}
 	}
 	
+	//method to get settings from tails
 	public HashMap<Character,Character> tailSettings(char rightRotorPos, HashMap<Character,Character> plugboardSettings, ArrayList<ArrayList<String>> tails){
 		//don't need to set left and middle rotor since they are already done in crackClosures, make sure this is true or change if this changes in the future
 		ArrayList<HashMap<Character,Character>> tailsPlugboardSettings = new ArrayList<HashMap<Character,Character>>();
-			
+		//System.out.println(plugboardSettings);	
+		
+		//for each tail it gets the plugboard settings and adds them to plugboardSettings, if a tail returns an empty hashmap then we return an empty hashmap
+		//to signal that the current starting position isn't correct
 		for(ArrayList<String> tail:tails){
 			HashMap<Character,Character> temp = settingsFromTail(rightRotorPos, plugboardSettings, tail);
 			if(temp.isEmpty()){
@@ -618,32 +626,52 @@ public class BombeMachine{
 				tailsPlugboardSettings.add(temp);
 			}
 		}
+		
 		tailsPlugboardSettings.add(plugboardSettings);
 		HashMap<Character, Character> returnSettings = attemptToMergeSettings(tailsPlugboardSettings);
-		System.out.println(returnSettings);
+		//System.out.println(returnSettings +" blah");
 		return returnSettings;	
 	}
 	
+	//method used to get the settings from a tail
 	public HashMap<Character,Character> settingsFromTail(char rightRotorPos, HashMap<Character,Character> plugboardSettings, ArrayList<String> tail){
-		System.out.println(tail);
+		//System.out.println(rightRotorPos);
+		//System.out.println(tail);
+		
+		//finds the first letter in the tail which we know the plugboard Settings for
+		char startingChar='-';
+		int index=0;
+		
+		while(startingChar=='-' && index<tail.size()){
+			if(plugboardSettings.containsKey(tail.get(index).charAt(0))){
+				startingChar=tail.get(index).charAt(0);
+			}
+			index+=1;
+		}
+		
+		//System.out.println(startingChar);
+		//sets up a new hashmap to store the settings
 		HashMap<Character,Character> settings = new HashMap<Character,Character>();
 		
+		//gets the first rotor
 		Rotor firstRotor = (Rotor) scrambler.getFirstRotor();
-		settings.put(plugboardSettings.get(tail.get(0).charAt(0)),tail.get(0).charAt(0));
-		settings.put(tail.get(0).charAt(0),plugboardSettings.get(tail.get(0).charAt(0)));
 		
-		System.out.println(settings);
+		//puts the settings for the letter we found in the tail into the hashmap
+		settings.put(plugboardSettings.get(startingChar),startingChar);
+		settings.put(startingChar,plugboardSettings.get(startingChar));
+		
+		//System.out.println(settings);
 		
 		scrambler.setCrackingMode(true);
-		for(int i=1;i<tail.size();i+=2){
-			System.out.println(tail.get(i)+","+tail.get(i-1)+tail.get(i+1));
+		
+		//letters after starting letter in the tail
+		for(int i=index;i<tail.size();i+=2){
 			//rotate then encrypt
 			char currentRightPos = (char)(((int)Character.toLowerCase(rightRotorPos)%97+Integer.parseInt(tail.get(i)))%26 + 97);
 			
 			firstRotor.setPosition(currentRightPos);
-			//System.out.println(firstRotor.getCharOnTop());
+			
 			char swap=scrambler.encrypt(settings.get(tail.get(i-1).charAt(0)));
-			System.out.println(swap);
 			
 			//check that if the original settings contain either swap or the current character, then the current char and swap must be swapped
 			//otherwise return an empty hashmap and output an error message
@@ -660,10 +688,39 @@ public class BombeMachine{
 				}
 			}
 			
+			//we then add the settings to the hashmap, note we still add the settings even if they are in plugboard settings, since they
+			//won't be in the settings variable
 			settings.put(tail.get(i+1).charAt(0),swap);
 			settings.put(swap,tail.get(i+1).charAt(0));
 		}
-		System.out.println(settings);
+		
+		//letters before starting char
+		for(int i=index-2;i>0;i-=2){
+			//rotate then encrypt
+			char currentRightPos = (char)(((int)Character.toLowerCase(rightRotorPos)%97+Integer.parseInt(tail.get(i)))%26 + 97);
+			firstRotor.setPosition(currentRightPos);
+			
+			char swap=scrambler.encrypt(settings.get(tail.get(i+1).charAt(0)));
+			
+			//check that if the original settings contain either swap or the current character, then the current char and swap must be swapped
+			//otherwise return an empty hashmap and output an error message
+			if(plugboardSettings.containsKey(tail.get(i-1).charAt(0))){				
+				if(!(plugboardSettings.get(tail.get(i-1).charAt(0)).equals(swap))){
+					//System.out.println("tail is inconsistent");
+					return new HashMap<Character,Character>();
+				}
+			}
+			else if(plugboardSettings.containsKey(swap)){
+				if(!(plugboardSettings.get(swap).equals(tail.get(i-1).charAt(0)))){
+					//System.out.println("tail is inconsistent");
+					return new HashMap<Character,Character>();
+				}
+			}
+			
+			settings.put(tail.get(i-1).charAt(0),swap);
+			settings.put(swap,tail.get(i-1).charAt(0));
+		}
+		
 		
 		return settings;
 	}
@@ -777,7 +834,7 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the enigma machine
-	public void crackEnigma(ArrayList<String> closures){
+	public void crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
 		
 		//arraylist to store each of the rotors 
 		ArrayList<Character> temp = new ArrayList<Character>();
@@ -791,6 +848,7 @@ public class BombeMachine{
 		//gets all rotor permutations
 		ArrayList<ArrayList<Character>> rotorPermutations= permutations(temp,3);
 		
+		long startTime = System.currentTimeMillis();
 		//we go through all permutations with the reflector as each of the reflectors
 		for(char reflector: useableReflectors){			
 			for(ArrayList<Character> permutation: rotorPermutations){
@@ -805,9 +863,13 @@ public class BombeMachine{
 				//we output the current permutation
 				System.out.println(this.permutation);
 				//we then run the crackClosures method for the closures with the current permutation
-				crackClosures(closures);
+				crackClosures(closures, tails);
 			}
 		}
+		long runTime = System.currentTimeMillis() - startTime;
+		long minutes = (runTime/1000)/60;
+		long seconds = (runTime/1000)%60;
+		System.out.println("This took: "+minutes+" minutes and " + seconds +" seconds to run");
 	}
 	
 	//used to find all paths starting with the given path for the menu
@@ -1151,6 +1213,8 @@ public class BombeMachine{
 					}
 				}
 				
+				//sort closures so largest are at the front
+				Collections.sort(closures, new ClosureComparator());
 				//outputs them
 				System.out.println("Closures are: ");
 				//make closures nicer
@@ -1162,35 +1226,72 @@ public class BombeMachine{
 				//prompts user for which closures to use for cracking the enigma machine
 				while(!(input.equals("menu"))){
 					System.out.println("Type menu to go back to the main menu");
-					System.out.println("Or type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
+					System.out.println("Type \"manual\" if you want to manually select closures, or type \"amount\" if you want to just say how many closures to use");
+					//System.out.println("Or type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
 					
 					//gets input
 					input=scanner.nextLine();
 					if(!(input.equals("menu"))){
 						//remove spaces
 						input=input.replaceAll("\\s+","");
+						if(input.equals("manual")){
+							System.out.println("Type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
 					
-						ArrayList<String> closuresToBeUsed = new ArrayList<String>();
-						String[] closureNumbers=input.split(",");
-					
-						for(String closureNumber:closureNumbers){
-							//gets the closure index
-							int index = Integer.parseInt(closureNumber)-1;
-							String closure = closures.get(index).get(0);
-							
-							//converts the closure to a string
-							for(int i=1;i<closures.get(index).size()-1;i++){
-								closure=closure+","+closures.get(index).get(i);
+							//gets input
+							input=scanner.nextLine();
+							//remove spaces
+							input=input.replaceAll("\\s+","");
+						
+							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							String[] closureNumbers=input.split(",");
+						
+							for(String closureNumber:closureNumbers){
+								//gets the closure index
+								int index = Integer.parseInt(closureNumber)-1;
+								String closure = closures.get(index).get(0);
+								
+								//converts the closure to a string
+								for(int i=1;i<closures.get(index).size()-1;i++){
+									closure=closure+","+closures.get(index).get(i);
+								}
+								
+								//adds the closure to the array list
+								closuresToBeUsed.add(closure);
 							}
 							
-							//adds the closure to the array list
-							closuresToBeUsed.add(closure);
+							System.out.println(closuresToBeUsed);
+							
+							//cracks enigma using the closures
+							crackEnigma(closuresToBeUsed, tails);
 						}
-						
-						System.out.println(closuresToBeUsed);
-						
-						//cracks enigma using the closures
-						crackEnigma(closuresToBeUsed);
+						else if(input.equals("amount")){
+							System.out.println("Type the amount of closures you want to use");
+							//gets input
+							input=scanner.nextLine();
+							//remove spaces
+							input=input.replaceAll("\\s+","");
+							
+							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							
+							int amount = Integer.parseInt(input);
+							for(int i=0;i<amount;i++){
+								//get the closure and convert it to a string								
+								String closure = closures.get(i).get(0);
+								
+								//converts the closure to a string
+								for(int j=1;j<closures.get(i).size()-1;j++){
+									closure=closure+","+closures.get(i).get(j);
+								}
+								
+								//adds the closure to the array list
+								closuresToBeUsed.add(closure);
+							}
+							
+							System.out.println(closuresToBeUsed);
+							
+							//cracks enigma using the closures
+							crackEnigma(closuresToBeUsed, tails);
+						}
 					}
 				}
 			}
@@ -1266,7 +1367,7 @@ public class BombeMachine{
 				}
 				
 				//the enigma is then cracked with the current inputted closures
-				crackEnigma(closures);
+				//crackEnigma(closures);
 				
 			}
 			//else if the user inputted 2 then they are taken to crib/cipher menu

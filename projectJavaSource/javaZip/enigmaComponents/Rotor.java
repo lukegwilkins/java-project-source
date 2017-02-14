@@ -234,7 +234,7 @@ public class Rotor extends BasicRotor{
 				printer.addTab();
 			}
 			
-			//we get the next rotor to encrypr
+			//we get the next rotor to encrypt
 			char nextRotorEncrypt = nextRotor.encrypt((char)(97+outWire));
 			
 			//if the printer is enabled we remove the tab
