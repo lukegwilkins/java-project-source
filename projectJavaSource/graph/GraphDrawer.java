@@ -60,7 +60,7 @@ public class GraphDrawer extends JFrame{
 	}
 	
 	public void addNode(Color col, String text){
-		Node node = new Node(col, nextPoint, 20,text);
+		Node node = new Node(col, nextPoint, 10,text);
 		
 		int xCoord = nextPoint.getXCoord();
 		int yCoord = nextPoint.getYCoord();

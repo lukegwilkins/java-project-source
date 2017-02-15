@@ -1,6 +1,8 @@
 import enigmaComponents.*;
 import java.util.*;
 import java.lang.Character;
+import graph.Graph;
+import java.io.*;
 
 public class BombeMachine{
 	//variables for use in the BombeMachine class
@@ -15,6 +17,7 @@ public class BombeMachine{
 	private int cribPosition;
 	private Scanner scanner;
 	private ArrayList<Character> useableReflectors;
+	private Graph graph;
 	
 	//constructor for the BombeMachine
 	public BombeMachine(){
@@ -378,6 +381,8 @@ public class BombeMachine{
 				menu.get(cribCipher.charAt(i)).put(crib.charAt(i),temp);
 			}
 		}
+		
+		graph = new Graph(menu);
 	}
 	
 	//method for the rotor permutation option, works the same as in the enigma machine
@@ -1326,6 +1331,39 @@ public class BombeMachine{
 		}
 	}
 	
+	//method for testing the bombe
+	public void bombeTest(){
+		try{
+			String input = "";
+			System.out.println("Input file name");
+			input = scanner.nextLine();
+			String contents = new Scanner(new File(input)).useDelimiter("\\Z").next();
+			
+			//String[] lines = ;
+			ArrayList<String> lines = new ArrayList<String>(Arrays.asList(contents.split("\n")));
+			
+			ArrayList<ArrayList<String>> cribsAndCiphers = new ArrayList<ArrayList<String>>();
+			for(String line:lines){				
+				
+				String[] lineData = line.split("\\),");
+				String data=lineData[lineData.length-1].replaceAll("\\s|\\(|\\)","");
+				
+				String[] dataArray = data.split(",");
+				
+				ArrayList<String> temp = new ArrayList<String>();
+				temp.add(dataArray[0]);
+				temp.add(dataArray[2]);
+				
+				cribsAndCiphers.add(temp);
+			}
+			System.out.println(cribsAndCiphers);
+		}
+		catch(Exception e){
+			System.out.println(e);
+			System.out.println("There was an error reading the file");
+		}
+	}
+	
 	//run method for the bombe
 	public void run(){
 		String input ="";
@@ -1342,6 +1380,7 @@ public class BombeMachine{
 			System.out.println("2. edit crib/ciphertext");
 			System.out.println("3. generate closures/tails");
 			System.out.println("4. input reflectors for use in cracking");
+			System.out.println("5. input test encryptions");
 			System.out.println("type quit to exit");
 			
 			//prompts the user for input 
@@ -1383,8 +1422,17 @@ public class BombeMachine{
 			else if(input.equals("4")){
 				setUseableReflectors();
 			}
+			else if(input.equals("5")){
+				bombeTest();
+			}
+		}
+		
+		if(graph!=null){
+			graph.getGraphDrawer().setVisible(false);
+			graph.getGraphDrawer().dispose();
 		}
 	}
+	
 	
 	//main method for the bombe
 	public static void main(String args[]){

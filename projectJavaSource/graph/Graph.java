@@ -58,6 +58,9 @@ public class Graph{
 		}
 	}
 	
+	public GraphDrawer getGraphDrawer(){
+		return graphDrawer;
+	}
 	public static void main(String[] args){
 		HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
 		HashMap<Character,ArrayList<Integer>> neighboursOfA = new HashMap<Character,ArrayList<Integer>>();
