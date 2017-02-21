@@ -18,9 +18,12 @@ public class BombeMachine{
 	private Scanner scanner;
 	private ArrayList<Character> useableReflectors;
 	private Graph graph;
+	private PrintWriter file;
+	private boolean outputToFile;
 	
 	//constructor for the BombeMachine
 	public BombeMachine(){
+		outputToFile=false;
 		//printer used for the enigma components
 		printer = new Printer();
 		
@@ -382,7 +385,9 @@ public class BombeMachine{
 			}
 		}
 		
+		//System.out.println("Hello");
 		graph = new Graph(menu);
+		//System.out.println("hello 2");
 	}
 	
 	//method for the rotor permutation option, works the same as in the enigma machine
@@ -466,7 +471,7 @@ public class BombeMachine{
 			//makes a new arraylist to store the plugboard settings
 			closuresPlugboardSettings = new ArrayList<ArrayList<HashMap<Character,Character>>>();
 			//stores the rotor positions in a string
-			rotorPositions=""+leftRotorPos+middleRotorPos+rightRotorPos;
+			rotorPositions=""+leftRotorPos+middleRotorPos+rightRotorPos;			
 			
 			//for each of the closures it gets the plugboard settings and adds them to the arraylist
 			for(int j=0; j<closures.size();j++){
@@ -562,14 +567,22 @@ public class BombeMachine{
 						//and each of the plugboard settigns
 						if(!consistentMergedPlugboardSettings.isEmpty()){
 							String outputString;
+							boolean permutationOutputted=false;
 							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
-								outputString="";
+								outputString="";								
 								
 								HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
-								
 								if(!(settingsWithTails.isEmpty())){
-									System.out.println("rotor permutation is "+permutation);
-									System.out.println("rotor positions are "+rotorPositions);
+									if(outputToFile){
+										if(!permutationOutputted){
+											file.print("|"+permutation);
+										}
+										file.print("@"+rotorPositions);
+									}
+									else{
+										System.out.println("rotor permutation is "+permutation);
+										System.out.println("rotor positions are "+rotorPositions);
+									}
 									//for each of the plugboard settings it converts it to a string and outputs it
 									for(Character key: settingsWithTails.keySet()){
 										if(outputString.indexOf(key)==-1){
@@ -581,8 +594,15 @@ public class BombeMachine{
 											}
 										}
 									}
+									
 									outputString=outputString.substring(0,outputString.length()-2);
-									System.out.println(outputString);
+									
+									if(outputToFile){
+										file.print("#"+outputString);
+									}
+									else{
+										System.out.println(outputString);
+									}
 								}
 							}
 						}
@@ -622,6 +642,7 @@ public class BombeMachine{
 		//for each tail it gets the plugboard settings and adds them to plugboardSettings, if a tail returns an empty hashmap then we return an empty hashmap
 		//to signal that the current starting position isn't correct
 		for(ArrayList<String> tail:tails){
+			
 			HashMap<Character,Character> temp = settingsFromTail(rightRotorPos, plugboardSettings, tail);
 			if(temp.isEmpty()){
 				System.out.println("A tail was inconsistent");
@@ -642,7 +663,6 @@ public class BombeMachine{
 	public HashMap<Character,Character> settingsFromTail(char rightRotorPos, HashMap<Character,Character> plugboardSettings, ArrayList<String> tail){
 		//System.out.println(rightRotorPos);
 		//System.out.println(tail);
-		
 		//finds the first letter in the tail which we know the plugboard Settings for
 		char startingChar='-';
 		int index=0;
@@ -652,6 +672,10 @@ public class BombeMachine{
 				startingChar=tail.get(index).charAt(0);
 			}
 			index+=1;
+		}
+		
+		if(startingChar=='-'){
+			return plugboardSettings;
 		}
 		
 		//System.out.println(startingChar);
@@ -1267,6 +1291,7 @@ public class BombeMachine{
 							System.out.println(closuresToBeUsed);
 							
 							//cracks enigma using the closures
+							
 							crackEnigma(closuresToBeUsed, tails);
 						}
 						else if(input.equals("amount")){
@@ -1294,6 +1319,7 @@ public class BombeMachine{
 							
 							System.out.println(closuresToBeUsed);
 							
+							//System.out.println(tails);
 							//cracks enigma using the closures
 							crackEnigma(closuresToBeUsed, tails);
 						}
@@ -1356,7 +1382,44 @@ public class BombeMachine{
 				
 				cribsAndCiphers.add(temp);
 			}
-			System.out.println(cribsAndCiphers);
+			//System.out.println(cribsAndCiphers);
+			
+			System.out.println("Input output file name");
+			String fileName = scanner.nextLine();
+			int i=0;
+			for(ArrayList<String> cribAndCiphertext: cribsAndCiphers){
+				setCipherText(cribAndCiphertext.get(0));
+				setCrib(cribAndCiphertext.get(1));
+				
+				outputToFile=true;
+				file = new PrintWriter(new FileOutputStream(fileName+i+".txt",true), true);
+				file.println(cribAndCiphertext.get(0)+","+cribAndCiphertext.get(1));
+				
+				System.out.println(cribAndCiphertext.get(0).length());
+				System.out.println(cribAndCiphertext.get(1).length());
+				
+				for(int j=1; j<=(cribAndCiphertext.get(0).length()-cribAndCiphertext.get(1).length()); j++){
+					long startTime = System.currentTimeMillis();
+					System.out.println(j);
+					file.print(""+j);
+					testCracker(j,4);
+					
+					long runTime = System.currentTimeMillis() - startTime;
+					long minutes = (runTime/1000)/60;
+					long seconds = (runTime/1000)%60;
+					//System.out.println(minutes+":"+seconds);
+					file.println("\n"+minutes+":"+seconds);
+					if(graph!=null){
+						graph.getGraphDrawer().setVisible(false);
+						graph.getGraphDrawer().dispose();
+					}
+				}
+				
+				i++;
+				file.close();
+			}
+			
+			outputToFile=false;
 		}
 		catch(Exception e){
 			System.out.println(e);
@@ -1364,6 +1427,114 @@ public class BombeMachine{
 		}
 	}
 	
+	public void testCracker(int cribPosition, int numberOfClosures){
+		//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
+		System.out.println("Current crib is: "+crib);
+		System.out.println("Current ciphertext is: "+cipherText);
+			
+		//generates the menu for the crib and ciphertext at the inputted position
+		generateMenu(cribPosition);
+				
+		//gets the paths for the menu
+		ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+		ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
+				
+		//splits the paths into closures and tails
+		for(ArrayList<String> path: paths){
+			if(path.get(0).equals(path.get(path.size()-1))){
+				closures.add(path);
+			}
+			else{
+				tails.add(path);
+			}
+		}
+			
+		//sort closures so largest are at the front
+		Collections.sort(closures, new ClosureCompactCompare());
+		
+		//outputs them
+		System.out.println("Closures are: ");
+		//make closures nicer
+		for(int i=0;i<closures.size();i++){
+			System.out.println(""+(i+1)+". "+closures.get(i));
+		}
+		System.out.println("Tails are: "+ tails);
+								
+		ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							
+		for(int i=0;i<numberOfClosures;i++){
+			//get the closure and convert it to a string								
+			String closure = closures.get(i).get(0);
+								
+			//converts the closure to a string
+			for(int j=1;j<closures.get(i).size()-1;j++){
+				closure=closure+","+closures.get(i).get(j);
+			}
+								
+			//adds the closure to the array list
+			closuresToBeUsed.add(closure);
+		}
+							
+		System.out.println(closuresToBeUsed);
+							
+		//System.out.println(tails);
+		//cracks enigma using the closures
+		crackEnigma(closuresToBeUsed, tails);
+	}
+	
+	public ArrayList<ArrayList<String>> closureSelector(ArrayList<ArrayList<String>> closures, int k){
+		ArrayList<ArrayList<String>> closuresToBeUsed = new ArrayList<ArrayList<String>>();
+		
+		for(int i=0; i<k; i++){
+			closuresToBeUsed.add(closures.get(i));
+		}
+		System.out.println(closuresToBeUsed);
+		
+		boolean changedClosure = true;
+		while(changedClosure){
+			changedClosure=false;
+			
+			for(int i=0; i<closures.size();i++){
+				if(!(closuresToBeUsed.contains(closures.get(i)))){
+					ArrayList<ArrayList<String>> candidate= closuresToBeUsed;
+					for(int j=0; j<k; j++){
+						ArrayList<ArrayList<String>> temp = new ArrayList<ArrayList<String>>();
+						for(int m=0; m<k; m++){
+							if(m==j){
+								temp.add(closures.get(i));
+							}
+							else{
+								temp.add(closuresToBeUsed.get(m));
+							}
+						}
+						
+						if(alphabetCoverage(temp)>alphabetCoverage(candidate)){
+							candidate=temp;
+							changedClosure=true;
+						}
+					}
+					closuresToBeUsed=candidate;
+				}
+			}
+			//System.out.println(closuresToBeUsed);
+		}
+		return closuresToBeUsed;
+	}
+	
+	public int alphabetCoverage(ArrayList<ArrayList<String>> closures){
+		ArrayList<String> letters= new ArrayList<String>();
+		
+		for(int i=0; i<closures.size(); i++){
+			for(int j=0; j<closures.get(i).size(); j+=2){
+				if(!(letters.contains(closures.get(i).get(j)))){
+					letters.add(closures.get(i).get(j));
+				}
+			}
+		}
+		
+		return letters.size();
+	}
 	//run method for the bombe
 	public void run(){
 		String input ="";
@@ -1437,115 +1608,8 @@ public class BombeMachine{
 	//main method for the bombe
 	public static void main(String args[]){
 		BombeMachine bombe = new BombeMachine();
-		/*ArrayList<Character> list = new ArrayList<Character>();
-		list.add('1');
-		list.add('2');
-		list.add('3');
-		list.add('4');
-		list.add('5');
-		System.out.println(bombe.permutations(list,3));
-		bombe.changeRotorPermutation("b245");*/
-		/*HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
-		HashMap<Character,ArrayList<Integer>> neighboursOfA = new HashMap<Character,ArrayList<Integer>>();
-		ArrayList<Integer> temp = new ArrayList<Integer>();
-		temp.add(1);
-		neighboursOfA.put('b',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(2);
-		neighboursOfA.put('c',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(7);
-		neighboursOfA.put('g',temp);
-		menu.put('a',neighboursOfA);
 		
-		HashMap<Character,ArrayList<Integer>> neighboursOfB = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(1);
-		neighboursOfB.put('a',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(3);
-		neighboursOfB.put('d',temp);
-		menu.put('b',neighboursOfB);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfC = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(2);
-		neighboursOfC.put('a',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(4);
-		neighboursOfC.put('d',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(6);
-		neighboursOfC.put('f',temp);
-		menu.put('c',neighboursOfC);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfD = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(3);
-		neighboursOfD.put('b',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(4);
-		neighboursOfD.put('c',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(5);
-		temp.add(10);
-		neighboursOfD.put('e',temp);
-		menu.put('d',neighboursOfD);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfE = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(5);
-		temp.add(10);
-		neighboursOfE.put('d',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(8);
-		neighboursOfE.put('f',temp);
-		menu.put('e',neighboursOfE);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfF = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(6);
-		neighboursOfF.put('c',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(8);
-		neighboursOfF.put('e',temp);
-		temp = new ArrayList<Integer>();
-		temp.add(9);
-		neighboursOfF.put('h',temp);
-		menu.put('f',neighboursOfF);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfG = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(7);
-		neighboursOfG.put('a',temp);
-		menu.put('g',neighboursOfG);
-		
-		HashMap<Character,ArrayList<Integer>> neighboursOfH = new HashMap<Character,ArrayList<Integer>>();
-		temp = new ArrayList<Integer>();
-		temp.add(9);
-		neighboursOfH.put('f',temp);
-		menu.put('h', neighboursOfH);
-		
-		ArrayList<String> start = new ArrayList<String>();
-		start.add("a");
-		ArrayList<String> temp = new ArrayList<String>();
-		//temp.add("a");
-		temp.add("b");
-		temp.add("c");
-		ArrayList<String> temp2 = new ArrayList<String>();
-		temp2.add("a");
-		temp2.add("b");
-		temp2.add("c");
-		ArrayList<ArrayList<String>> tempList= new ArrayList<ArrayList<String>>();
-		tempList.add(temp2);
-		tempList.add(temp);
-		System.out.println(bombe.removePartialPaths(tempList));
-		bombe.setCipherText("abcde");
-		bombe.setCrib("hello");
-		bombe.generateMenu(1);
-		System.out.println(bombe.depthFirstSearch(bombe.getMenu()));
-		//System.out.println();*/
-		HashMap<Character,Character> temp = new HashMap<Character,Character>();
+		/*HashMap<Character,Character> temp = new HashMap<Character,Character>();
 		temp.put('a','b');
 		temp.put('b','a');
 		temp.put('n','z');
@@ -1573,7 +1637,64 @@ public class BombeMachine{
 		tails.add(tempTail);
 		tails.add(tempTailTwo);
 		
-		bombe.tailSettings('a',temp,tails);
+		bombe.tailSettings('a',temp,tails);*/
+		
+		ArrayList<ArrayList<String>> closures = new ArrayList<ArrayList<String>>();
+		ArrayList<String> tempTail = new ArrayList<String>();
+		tempTail.add("x");
+		tempTail.add("3");
+		tempTail.add("c");
+		tempTail.add("5");
+		tempTail.add("z");
+		tempTail.add("2");
+		
+		ArrayList<String> tempTailFive = new ArrayList<String>();
+		tempTailFive.add("b");
+		tempTailFive.add("2");
+		tempTailFive.add("k");
+		tempTailFive.add("3");
+		
+		ArrayList<String> tempTailSix = new ArrayList<String>();
+		tempTailSix.add("c");
+		tempTailSix.add("4");
+		tempTailSix.add("d");
+		tempTailSix.add("10");
+		
+		ArrayList<String> tempTailTwo = new ArrayList<String>();
+		tempTailTwo.add("a");
+		tempTailTwo.add("4");
+		tempTailTwo.add("f");
+		tempTailTwo.add("1");
+		//tempTailTwo.add("m");
+		
+		ArrayList<String> tempTailThree = new ArrayList<String>();
+		tempTailThree.add("b");
+		tempTailThree.add("7");
+		tempTailThree.add("k");
+		tempTailThree.add("8");
+		tempTailThree.add("d");
+		tempTailThree.add("6");
+		
+		ArrayList<String> tempTailFour = new ArrayList<String>();
+		tempTailFour.add("m");
+		tempTailFour.add("2");
+		tempTailFour.add("n");
+		tempTailFour.add("3");
+		tempTailFour.add("p");
+		tempTailFour.add("6");
+		tempTailFour.add("q");
+		tempTailFour.add("10");
+		
+		closures.add(tempTailFive);
+		closures.add(tempTailSix);
+		closures.add(tempTailTwo);
+		closures.add(tempTailThree);
+		closures.add(tempTailFour);
+		closures.add(tempTail);
+		
+		System.out.println(bombe.closureSelector(closures,3));
+		System.out.println(bombe.alphabetCoverage(closures));
+		
 		bombe.run();
 	}
 }
