@@ -1,4 +1,4 @@
-package graphicsObjects;
+package graph.graphicsObjects;
 
 import java.awt.Graphics;
 import java.awt.Color;

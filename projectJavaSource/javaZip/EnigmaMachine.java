@@ -3,6 +3,8 @@ import enigmaComponents.*;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Random;
+import java.io.*;
 
 public class EnigmaMachine{
 	//variables for the EnigmaMachine to use
@@ -102,6 +104,7 @@ public class EnigmaMachine{
 			System.out.println("4. Edit Plugboard settings");
 			System.out.println("5. Input settings and encrypt in one go");
 			System.out.println("6. Additional options");
+			System.out.println("7. Generate test data from files");
 			System.out.println("Type quit to quit");
 			
 			//try catch to capture errors
@@ -149,6 +152,9 @@ public class EnigmaMachine{
 						
 						additionalOptions();
 						
+					}
+					else if(input.equals("7")){
+						generateTestData();
 					}
 					//else an error message is outputted
 					else{
@@ -912,7 +918,229 @@ public class EnigmaMachine{
 		
 	}
 	
+	//method used to generate test data for the bombe using a file for key input and a file for plaintext input
+	public void generateTestData(){
+		System.out.println("Input plaintext file");
+		String input = scanner.nextLine();
+		
+		try{
+			//get plaintext
+			String contents = new Scanner(new File(input)).useDelimiter("\\Z").next();
+			contents=contents.toLowerCase();
+			//replace '?' with spaces
+			contents=contents.replace('?',' ');
+			contents=contents.replaceAll("\\s|,|\\.|\"|-|\\d|","");
+			
+			//System.out.println(contents);
+			
+			
+			
+			String[] messageStrings = contents.split("#");
+			ArrayList<String> messages = new ArrayList<String>(Arrays.asList(messageStrings));
+			//System.out.println(messages);
+			System.out.println("Input keys file");
+			input = scanner.nextLine();
+			
+			//get enigma keys
+			contents = new Scanner(new File(input)).useDelimiter("\\Z").next();
+			String[] keyStrings = contents.split("\n");
+			ArrayList<String> keys = new ArrayList<String>(Arrays.asList(keyStrings));
+			//System.out.println(keys);
+			
+			Random rand = new Random();
+			PrintWriter printer = new PrintWriter("output.txt","UTF-8");
+			for(String key:keys){
+				int messageIndex = rand.nextInt(messages.size());
+				String outputString=key.replaceAll("\\s","");
+				outputString=outputString + ", (" + messages.get(messageIndex)+"), (" + testingEncryption(key+", ("+messages.get(messageIndex)+")") +")";
+				System.out.println(outputString);				
+				//System.out.println(outputString+", (");
+				//System.out.println();
+				
+				printer.println(outputString);
+				//printer.println(outputString+", (");
+				//printer.println();
+			}
+			printer.close();
+		}
+		catch(Exception e){
+			System.out.println(e.getMessage());
+			System.out.println("Error reading in file");
+		}
+	}
+	
+	//method used to encrypt string for testing with the bombe
 	//main method that calls the run method
+	public String testingEncryption(String settingsAndMessage){
+		//removes all the whitespace in the input
+		settingsAndMessage = settingsAndMessage.replaceAll("\\s+","");
+		//removes all the left brackets
+		settingsAndMessage = settingsAndMessage.replaceAll("\\(","");
+		//splits the string via "),"
+		String[] settingsStringArray = settingsAndMessage.split("\\),");
+		String encryptedString="";
+		//if not all the options have been inputted an error message is outputted
+		if(settingsStringArray.length!=5){
+			
+			System.out.println("Invalid input");
+			
+		}
+		else{
+			
+			//splits each of the settings up into arrays
+			String[] permutationArray = settingsStringArray[0].split(",");
+			String[] ringPositions = settingsStringArray[1].split(",");
+			String[] rotorPositions = settingsStringArray[2].split(",");
+			
+			//if the permutation is incorrect an error is outputted
+			if(permutationArray.length != 4){
+				
+				System.out.println("Permutation is incorrect");
+				
+			}
+			//if ring settinsg are incorrect an error is outputted
+			else if(ringPositions.length != 3){
+				
+				System.out.println("The ring positions are incorrect");
+				
+			}
+			//if rotor settings are incorrect an error is outputted
+			else if(rotorPositions.length != 3){
+				
+				System.out.println("The rotor positions are incorrect");
+				
+			}
+			else{
+				//trys to encrypt the message using the current settigns
+				try{					
+					permutation = "";
+					
+					//gets which rotor is on the right
+					int rotor = Integer.parseInt(permutationArray [3]);
+					//sets the scrambler to have the first rotor as the rotor on the right
+					Rotor prevRotor = rotors[rotor-1];
+					scrambler.setFirstRotor(prevRotor);
+					//sets the right rotor's ring setting
+					prevRotor.setRingPosition(Integer.parseInt(ringPositions[2]));
+					
+					//the position can be given as an integer or a character
+					try{
+							//try to set the position with as an integer
+							prevRotor.setPosition(Integer.parseInt(rotorPositions[2]));
+					}
+					//if a number format error occurs set the position as a character
+					catch(NumberFormatException e){
+						
+							prevRotor.setPosition(rotorPositions[2].charAt(0));
+					}
+					
+					//stores the which rotor is on the right in permutation
+					permutation= "" + rotor;
+					
+					//we repeat this process for the middle and left rotors
+					for(int i=2; i>0;i--){
+						
+						rotor = Integer.parseInt(permutationArray [i]);
+						//set it so the previous rotor has the current rotor as the next rotor
+						prevRotor.setNextRotor(rotors[rotor-1]);
+						prevRotor = rotors[rotor-1];
+						prevRotor.setRingPosition(Integer.parseInt(ringPositions[i-1]));
+						
+						try{
+							
+							prevRotor.setPosition(Integer.parseInt(rotorPositions[i-1]));
+						}
+						catch(NumberFormatException e){
+							prevRotor.setPosition(rotorPositions[i-1].charAt(0));
+						}
+						//adds which rotor is been used to the permutation
+						permutation=""+rotor+", "+permutation;
+						
+					}
+					
+					//gets which reflector is been used
+					String reflectorString = permutationArray [0];
+					//stores the in permuation
+					permutation= reflectorString + ", "+ permutation;
+						
+					char reflectorChar = reflectorString.charAt(0);
+						
+					Reflector reflector = reflectors[(int)Character.toLowerCase(reflectorChar) - 97];
+					//sets it so that the left rotor has the reflector as its next rotor
+					prevRotor.setNextRotor(reflector);
+					
+					//we get the plugboard settings and split it by "," into an array
+					String[] plugBoardSettingsStringArray = settingsStringArray[3].split(",");
+					//we convert the array to an arrayList
+					ArrayList<String> swapSettings = new ArrayList<String>(Arrays.asList(plugBoardSettingsStringArray));
+					//System.out.println(swapSettings.get(0).equals(""));
+					
+					//if there are swaps then we get the plugboard to set up the swap mapping using swapSettings
+					if(!(swapSettings.size()==1 && swapSettings.get(0).equals(""))){
+						plugboard.setSwapMapping(swapSettings);
+					}
+					//if there are no swaps we reset the mapping
+					else{
+						plugboard.resetMapping();
+					}
+					
+					//we get the plaintext and remove the bracket
+					String plainText = settingsStringArray[4].replaceAll("\\)","");
+					
+					//we store whether the printer is enabled or disabled
+					boolean temp = plugboard.printerEnabled();
+					//then disable it
+					plugboard.disablePrinter();
+					
+					//we encrypt each letter in the plaintext add it to the encrypted string
+					Rotor middleRotor = (Rotor)((Rotor) scrambler.getFirstRotor()).getNextRotor();
+					char prevCharOnTop=middleRotor.getCharOnTop();
+					ArrayList<String> cribs= new ArrayList<String>();
+					String currentCrib="1, ";
+					
+					for(int i=0; i<plainText.length(); i++){
+						encryptedString= encryptedString + plugboard.encrypt(plainText.charAt(i));
+						if(prevCharOnTop!=middleRotor.getCharOnTop()){
+							cribs.add(currentCrib);
+							currentCrib=""+(i+2)+", ";
+							prevCharOnTop=middleRotor.getCharOnTop();
+						}
+						else{
+							currentCrib=currentCrib+plainText.charAt(i);
+						}
+						
+						//if we have encrypted 5 letters then we add a space to make the output easy  to read
+						/*if(((i+1)%5)==0){						
+							encryptedString = encryptedString + " ";						
+						}*/
+						
+					}
+					Random rand = new Random();
+					int cribIndex = rand.nextInt(cribs.size());
+					while(cribs.get(cribIndex).length()<8){
+						cribIndex = rand.nextInt(cribs.size());
+					}
+					
+					//System.out.println(cribs.get(cribIndex));
+					encryptedString = encryptedString +", "+ cribs.get(cribIndex);
+					//if the printer was originally enabled then we renabled it
+					if(temp){					
+						plugboard.enablePrinter();
+					}
+					
+					//we then output the encrypted text
+					//System.out.println("The encrypted text is:\n" + encryptedString);
+					
+				}
+				catch(IllegalArgumentException e){
+					//if an error occurs we output it 
+					System.out.println(e.getMessage());
+				}
+			}
+		}
+		
+		return encryptedString;
+	}
 	public static void main(String args[]){
 		EnigmaMachine enigmaMachine = new EnigmaMachine();
 		enigmaMachine.Run();

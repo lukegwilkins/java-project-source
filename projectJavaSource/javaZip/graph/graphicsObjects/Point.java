@@ -1,4 +1,4 @@
-package graphicsObjects;
+package graph.graphicsObjects;
 
 public class Point{
 	private int xCoord;

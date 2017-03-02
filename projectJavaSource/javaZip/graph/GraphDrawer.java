@@ -1,10 +1,12 @@
+package graph;
+
 import javax.swing.*;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Color;
 import java.util.ArrayList;
 
-import graphicsObjects.*;
+import graph.graphicsObjects.*;
 
 public class GraphDrawer extends JFrame{
 	private ArrayList<Node> nodes;
@@ -16,6 +18,7 @@ public class GraphDrawer extends JFrame{
 	private Node test;
 	
 	private Point nextPoint;
+	
 	public GraphDrawer(){
 		height=600;
 		width=600;
@@ -57,7 +60,7 @@ public class GraphDrawer extends JFrame{
 	}
 	
 	public void addNode(Color col, String text){
-		Node node = new Node(col, nextPoint, 30,text);
+		Node node = new Node(col, nextPoint, 10,text);
 		
 		int xCoord = nextPoint.getXCoord();
 		int yCoord = nextPoint.getYCoord();
@@ -65,7 +68,7 @@ public class GraphDrawer extends JFrame{
 		xCoord=xCoord+width/5;
 		if(xCoord>width-20){
 			xCoord=50;
-			yCoord=yCoord+height/5;
+			yCoord=yCoord+height/6;
 		}
 		nextPoint = new Point(xCoord,yCoord);
 		nodes.add(node);
@@ -88,7 +91,26 @@ public class GraphDrawer extends JFrame{
 			i++;
 		}
 		
-		Edge edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,true);
+		Edge edge;
+		if(nodeOne.getCoords().getXCoord()==nodeTwo.getCoords().getXCoord()){
+			if(Math.abs(nodeOne.getCoords().getYCoord()-nodeTwo.getCoords().getYCoord())<=height/6){
+				edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,false);
+			}
+			else{
+				edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,true);
+			}
+		}
+		else if(nodeOne.getCoords().getYCoord()==nodeTwo.getCoords().getYCoord()){
+			if(Math.abs(nodeOne.getCoords().getXCoord()-nodeTwo.getCoords().getXCoord())<=(width/5)){
+				edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,false);
+			}
+			else{
+				edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,true);
+			}
+		}
+		else{
+			edge = new Edge(col, nodeOne.getCoords(), nodeTwo.getCoords(),label,false);
+		}
 		
 		edges.add(edge);
 		repaint();
@@ -99,16 +121,28 @@ public class GraphDrawer extends JFrame{
 				public void run(){
 					GraphDrawer graphDrawer = new GraphDrawer();
 					
-					graphDrawer.addNode(Color.green,"A");
-					graphDrawer.addNode(Color.blue,"B");
+					graphDrawer.addNode(Color.white, "A");
+					graphDrawer.addNode(Color.white, "B");
+					graphDrawer.addNode(Color.white, "C");
 					
-					graphDrawer.addNode(Color.red,"C");
-					graphDrawer.addNode(Color.yellow,"D");
-					graphDrawer.addNode(Color.pink,"E");
+					graphDrawer.addNode(Color.white, "D");
+					graphDrawer.addNode(Color.white, "E");					
+					graphDrawer.addNode(Color.white, "F");
 					
-					graphDrawer.addNode(Color.magenta,"F");
+					graphDrawer.addNode(Color.white, "G");
+					graphDrawer.addNode(Color.white, "H");
+					graphDrawer.addNode(Color.white, "I");
 					
 					graphDrawer.addEdge(Color.lightGray, "B", "A", "20");
+					graphDrawer.addEdge(Color.lightGray, "F", "A", "15");
+					graphDrawer.addEdge(Color.lightGray, "A", "C", "30");
+					
+					graphDrawer.addEdge(Color.lightGray, "A", "G", "5");
+					graphDrawer.addEdge(Color.lightGray, "B", "F", "10");
+					graphDrawer.addEdge(Color.lightGray, "G", "E", "1");
+					
+					graphDrawer.addEdge(Color.lightGray, "C","H","4");
+					graphDrawer.addEdge(Color.lightGray,"A", "I","13");
 				}
 			}
 		);
