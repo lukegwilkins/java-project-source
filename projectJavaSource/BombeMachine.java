@@ -91,9 +91,9 @@ public class BombeMachine{
 		
 		//stores which reflectors may be used for cracking
 		useableReflectors= new ArrayList<Character>();
-		//useableReflectors.add('a');
+		useableReflectors.add('a');
 		useableReflectors.add('b');
-		//useableReflectors.add('c');
+		useableReflectors.add('c');
 		
 		plugboard = new Plugboard();
 		plugboard.setScrambler(scrambler);
@@ -1398,11 +1398,13 @@ public class BombeMachine{
 			ArrayList<String> lines = new ArrayList<String>(Arrays.asList(contents.split("\n")));
 			
 			ArrayList<ArrayList<String>> cribsAndCiphers = new ArrayList<ArrayList<String>>();
+			ArrayList<String> reflectorSettings = new ArrayList<String>();
 			for(String line:lines){				
 				
 				String[] lineData = line.split("\\),");
 				String data=lineData[lineData.length-1].replaceAll("\\s|\\(|\\)","");
-				
+				String[] permutation = lineData[0].replaceAll("\\s|\\(|\\)","").split(",");
+				reflectorSettings.add(permutation[0].toLowerCase());
 				String[] dataArray = data.split(",");
 				
 				ArrayList<String> temp = new ArrayList<String>();
@@ -1421,7 +1423,8 @@ public class BombeMachine{
 			for(ArrayList<String> cribAndCiphertext: cribsAndCiphers){
 				setCipherText(cribAndCiphertext.get(0));
 				setCrib(cribAndCiphertext.get(1));
-				
+				useableReflectors= new ArrayList<Character>();
+				useableReflectors.add(reflectorSettings.get(i).charAt(0));
 				outputToFile=true;
 				file = new PrintWriter(new FileOutputStream(fileName+i+".txt",true), true);
 				file.println(cribAndCiphertext.get(0)+","+cribAndCiphertext.get(1));
@@ -1462,56 +1465,63 @@ public class BombeMachine{
 		//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
 		System.out.println("Current crib is: "+crib);
 		System.out.println("Current ciphertext is: "+cipherText);
-			
-		//generates the menu for the crib and ciphertext at the inputted position
-		generateMenu(cribPosition);
+		String cribCipherText=cipherText.substring(cribPosition-1, cribPosition-1 + crib.length());
+		if(validCribAndCipher(crib,cribCipherText)){
+			//generates the menu for the crib and ciphertext at the inputted position
+			generateMenu(cribPosition);
+					
+			//gets the paths for the menu
+			ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+			ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+			ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
+					
+			//splits the paths into closures and tails
+			for(ArrayList<String> path: paths){
+				if(path.get(0).equals(path.get(path.size()-1))){
+					closures.add(path);
+				}
+				else{
+					tails.add(path);
+				}
+			}
 				
-		//gets the paths for the menu
-		ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
-		ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
-		ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
-				
-		//splits the paths into closures and tails
-		for(ArrayList<String> path: paths){
-			if(path.get(0).equals(path.get(path.size()-1))){
-				closures.add(path);
-			}
-			else{
-				tails.add(path);
-			}
-		}
+			//sort closures so largest are at the front
+			Collections.sort(closures, new ClosureComparator());
 			
-		//sort closures so largest are at the front
-		Collections.sort(closures, new ClosureComparator());
-		
-		//outputs them
-		System.out.println("Closures are: ");
-		//make closures nicer
-		for(int i=0;i<closures.size();i++){
-			System.out.println(""+(i+1)+". "+closures.get(i));
-		}
-		System.out.println("Tails are: "+ tails);
+			//outputs them
+			System.out.println("Closures are: ");
+			//make closures nicer
+			for(int i=0;i<closures.size();i++){
+				System.out.println(""+(i+1)+". "+closures.get(i));
+			}
+			System.out.println("Tails are: "+ tails);
+									
+			ArrayList<String> closuresToBeUsed = new ArrayList<String>();
 								
-		ArrayList<String> closuresToBeUsed = new ArrayList<String>();
-							
-		for(int i=0;i<numberOfClosures;i++){
-			//get the closure and convert it to a string								
-			String closure = closures.get(i).get(0);					
-			//converts the closure to a string
-			for(int j=1;j<closures.get(i).size()-1;j++){
-				closure=closure+","+closures.get(i).get(j);
+			for(int i=0;i<numberOfClosures && i<closures.size();i++){
+				//get the closure and convert it to a string								
+				String closure = closures.get(i).get(0);					
+				//converts the closure to a string
+				for(int j=1;j<closures.get(i).size()-1;j++){
+					closure=closure+","+closures.get(i).get(j);
+				}
+									
+				//adds the closure to the array list
+				closuresToBeUsed.add(closure);
 			}
 								
-			//adds the closure to the array list
-			closuresToBeUsed.add(closure);
+			System.out.println(closuresToBeUsed);
+			
+			tails=edgePicker(closuresToBeUsed,tails);		
+			System.out.println(tails);
+			//cracks enigma using the closures
+			file.print("|"+numberOfLetters(closuresToBeUsed, tails));
+			crackEnigma(closuresToBeUsed, tails);
 		}
-							
-		System.out.println(closuresToBeUsed);
-		
-		tails=edgePicker(closuresToBeUsed,tails);		
-		System.out.println(tails);
-		//cracks enigma using the closures
-		crackEnigma(closuresToBeUsed, new ArrayList<ArrayList<String>>());
+		else{
+			file.print("|invalid");
+			System.out.println("invalid position");
+		}
 	}
 	
 	public ArrayList<ArrayList<String>> closureSelector(ArrayList<ArrayList<String>> closures, int k){
@@ -1723,6 +1733,16 @@ public class BombeMachine{
 		return returnString;
 	}
 	
+	public boolean validCribAndCipher(String crib, String cipher){
+		//boolean valid = true;
+		for(int i=0; i<crib.length();i++){
+			if(crib.charAt(i)==cipher.charAt(i)){
+				return false;
+			}
+		}
+		
+		return true;
+	}
 	public String startingRotorPos(String permutation, String rotorPositions, int position){		
 		for(int i=0; i<position-1;i++){
 			rotorPositions= previousRotorPos(permutation, rotorPositions);
@@ -1730,7 +1750,6 @@ public class BombeMachine{
 
 		return rotorPositions;
 	}
-	
 	
 	public String previousRotorPos(String permutation, String rotorPositions){
 		rotorPositions.toLowerCase();
@@ -1786,6 +1805,28 @@ public class BombeMachine{
 		}
 		return prevRotorPos;
 			
+	}
+	
+	public int numberOfLetters(ArrayList<String> closureStrings, ArrayList<ArrayList<String>> tails){
+		ArrayList<String> alphabet = new ArrayList<String>(Arrays.asList("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"));
+		
+		for(String closure:closureStrings){
+			for(int i=0;i<closure.length();i++){
+				if(alphabet.contains(""+closure.charAt(i))){
+					alphabet.remove(""+closure.charAt(i));
+				}
+			}
+		}
+		
+		for(ArrayList<String> tail:tails){
+			for(String letter:tail){
+				if(alphabet.contains(letter)){
+					alphabet.remove(letter);
+				}
+			}
+		}
+		
+		return 26-alphabet.size();
 	}
 	
 	//run method for the bombe
@@ -1856,7 +1897,6 @@ public class BombeMachine{
 			graph.getGraphDrawer().dispose();
 		}
 	}
-	
 	
 	//main method for the bombe
 	public static void main(String args[]){
@@ -1966,7 +2006,7 @@ public class BombeMachine{
 		ArrayList<String> closuresTwo = new ArrayList<String>();
 		closuresTwo.add("a,1,c,10");
 		closuresTwo.add("b,2,f,4,g,5");
-		
+		System.out.println(bombe.numberOfLetters(closuresTwo,tails));
 		System.out.println(bombe.closureSelector(closures,3));
 		System.out.println(bombe.alphabetCoverage(closures));
 		
