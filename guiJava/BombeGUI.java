@@ -246,7 +246,7 @@ public class BombeGUI extends JFrame
 		
 		//give crackEnigma its own thread
 		ArrayList<ArrayList<String>> tailsToBeUsed = bombe.edgePicker(closuresToBeUsed, tails);
-		System.out.println("hello");
+		//System.out.println("hello");
 		Thread resultsThread = new Thread(new Runnable(){
 			public void run(){
 				bombe.crackEnigma(closuresToBeUsed, tailsToBeUsed);

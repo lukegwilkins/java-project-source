@@ -624,31 +624,39 @@ public class BombeMachine{
 				}
 				//else if the size of closurePlugboardSettings is 1, i.e. there was 1 closure then we just output all of its settings
 				else{
-					System.out.println("rotor permutation is "+permutation);
-					System.out.println("rotor positions are "+rotorPositions);
+					//System.out.println("rotor permutation is "+permutation);
+					//System.out.println("rotor positions are "+rotorPositions);
 					String outputString;			
 					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
 						outputString="";
-						ArrayList<String> temp = new ArrayList<String>();
-						temp.add(permutation);
-						temp.add(rotorPositions);
+						HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
 						
-						for(Character key: plugboardSettings.keySet()){
-							if(outputString.indexOf(key)==-1){
-								if((int)key < (int)plugboardSettings.get(key)){
-									outputString+=key+"/"+plugboardSettings.get(key)+", ";
-								}
-								else{
-									outputString+=plugboardSettings.get(key)+"/"+key+", ";
+						if(!(settingsWithTails.isEmpty())){
+							ArrayList<String> temp = new ArrayList<String>();
+							temp.add(permutation);
+							temp.add(rotorPositions);
+							
+							bombeGUI.outputResultsln("rotor permutation is "+permutation);
+							bombeGUI.outputResultsln("rotor positions are "+rotorPositions);
+							
+							for(Character key: plugboardSettings.keySet()){
+								if(outputString.indexOf(key)==-1){
+									if((int)key < (int)plugboardSettings.get(key)){
+										outputString+=key+"/"+plugboardSettings.get(key)+", ";
+									}
+									else{
+										outputString+=plugboardSettings.get(key)+"/"+key+", ";
+									}
 								}
 							}
+							
+							
+							outputString=outputString.substring(0,outputString.length()-1);
+							temp.add(outputString);
+							returnSettings.add(temp);
+							//System.out.println(outputString);
+							bombeGUI.outputResultsln(outputString);
 						}
-						
-						
-						outputString=outputString.substring(0,outputString.length()-1);
-						temp.add(outputString);
-						returnSettings.add(temp);
-						System.out.println(outputString);
 					}
 				}
 			}
@@ -668,7 +676,7 @@ public class BombeMachine{
 			
 			HashMap<Character,Character> temp = settingsFromTail(rightRotorPos, plugboardSettings, tail);
 			if(temp.isEmpty()){
-				System.out.println("A tail was inconsistent");
+				//System.out.println("A tail was inconsistent");
 				return new HashMap<Character,Character>();
 			}
 			else{
