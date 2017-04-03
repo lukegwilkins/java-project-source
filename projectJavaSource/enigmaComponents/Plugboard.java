@@ -83,7 +83,7 @@ public class Plugboard{
 		//checks that each swap has '/' in the middle and is of length ex
 		for(String string : mapping){
 			if(string.length()!=3 || string.indexOf('/')!=1){
-				throw new IllegalArgumentException("A swap is a string of length exactly 3 in the form A//B, where A and B are the two swapped letters");
+				throw new IllegalArgumentException("A swap is a string of length exactly 3 in the form A/B, where A and B are the two swapped letters");
 			}
 		}
 		//we rest the mapping

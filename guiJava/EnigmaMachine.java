@@ -692,6 +692,47 @@ public class EnigmaMachine{
 		}
 	}
 	
+	public void setPermutation(String inputPerm){		
+		String[] stringPositions = inputPerm.replaceAll("\\s","").split(",");
+		
+		//set the rotor of the left to be the last rotor in the string
+		int rotor = Integer.parseInt(stringPositions[3]);
+		Rotor prevRotor = rotors[rotor-1];
+		Rotor firstRotor = prevRotor;
+		
+		//disable the doublestep
+		firstRotor.disableDoubleStep();
+		
+		//stores the permutation as it is been processed
+		permutation= "" + rotor;
+		
+		//sets the rotor in the middle and right 
+		for(int i=2; i>0;i--){
+			rotor = Integer.parseInt(stringPositions[i]);
+			//sets the previous rotor to point to the next rotor
+			prevRotor.setNextRotor(rotors[rotor-1]);
+			prevRotor = rotors[rotor-1];
+			//stores the permutation as it is been processed
+			permutation=""+rotor+", "+permutation;
+			prevRotor.disableDoubleStep();
+		}
+		
+		//gets the reflector used 
+		String reflectorString = stringPositions[0];
+		permutation= reflectorString + ", "+ permutation;
+		
+		char reflectorChar = reflectorString.charAt(0);
+		
+		//has the left rotor point to the reflector
+		Reflector reflector = reflectors[(int)Character.toLowerCase(reflectorChar) - 97];
+		prevRotor.setNextRotor(reflector);
+		
+		//enables doublestep for the middle rotor
+		((Rotor)firstRotor.getNextRotor()).enableDoubleStep();
+		
+		//sets the scrambler to point to the first rotor/rotor on the right
+		scrambler.setFirstRotor(firstRotor);
+	}
 	//method for setting the plugboard settings
 	public void editPlugboardSettings(){
 		String input="";
@@ -1141,6 +1182,50 @@ public class EnigmaMachine{
 		
 		return encryptedString;
 	}
+	
+	public String getPermutation(){
+		return permutation;
+	}
+	
+	public Scrambler getScrambler(){
+		return scrambler;
+	}
+	
+	public Plugboard getPlugboard(){
+		return plugboard;
+	}
+	
+	public String encryptString(String message){
+		message = message.replaceAll("\\s","");
+		String encryptedString = "";
+		
+		//temporarily disable the printer for the plugboard
+		boolean temp = plugboard.printerEnabled();
+		plugboard.disablePrinter();
+		
+		//encrypt each letter in the string
+		for(int i=0; i<message.length(); i++){
+			
+			encryptedString= encryptedString + plugboard.encrypt(message.charAt(i));
+			
+			if(((i+1)%5)==0){
+				
+				encryptedString = encryptedString + " ";
+				
+			}
+			
+		}
+		
+		if(temp){
+			
+			plugboard.enablePrinter();
+			
+		}
+		//output the encrypted string
+		//System.out.println("The encrypted text is:\n" + encryptedString);
+		return encryptedString;
+	}
+	
 	public static void main(String args[]){
 		EnigmaMachine enigmaMachine = new EnigmaMachine();
 		enigmaMachine.Run();

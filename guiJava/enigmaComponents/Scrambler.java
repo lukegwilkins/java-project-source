@@ -92,10 +92,11 @@ public class Scrambler{
 	
 	//sets the rotor at the given position
 	//fix so a specific rotor object only occurs once
+	//change to be Rotor or handle Reflector case
 	public void setRotorAtPos(BasicRotor rotor, int position){
 		//check if we are replacing the first rotor
 		if(position == 0){
-			//check if rotor is and Instance of Rotor
+			//check if rotor is an Instance of Rotor
 			if(rotor instanceof Rotor){
 				if(amountOfRotors == 1){
 					firstRotor = rotor;

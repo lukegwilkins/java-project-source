@@ -57,7 +57,7 @@ public class BombeGUI extends JFrame
 		pack();
 	}
 	
-	public void addButtons(){
+	private void addButtons(){
 		menuButton = new JButton("Generate menu");
 		menuButton.setVerticalTextPosition(AbstractButton.CENTER);
 		menuButton.setHorizontalTextPosition(AbstractButton.LEADING);
@@ -68,6 +68,7 @@ public class BombeGUI extends JFrame
 		
 		constraints.anchor = GridBagConstraints.CENTER;
 		constraints.gridx = 2;
+		
 		constraints.gridy = 6;
 		getContentPane().add(menuButton, constraints);
 		
@@ -86,7 +87,7 @@ public class BombeGUI extends JFrame
 		
 	}
 	
-	public void addInputFields(){
+	private void addInputFields(){
 		crib = new JTextField(20);
 		JLabel cribLabel = new JLabel("Crib:");
 		
@@ -135,7 +136,7 @@ public class BombeGUI extends JFrame
 		constraints.gridheight = 1;
 	}
 	
-	public void addOutputFields(){
+	private void addOutputFields(){
 		closuresOutput = new JTextArea();
 		closuresOutput.setEditable(false);
 		closuresOutput.setLineWrap(true);
