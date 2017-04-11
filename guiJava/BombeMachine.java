@@ -463,7 +463,7 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the closures
-	public ArrayList<ArrayList<String>> crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
+	public ArrayList<ArrayList<String>> crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails, int cribPosition){
 		//System.out.println(tails);
 		//stores the rotor positions and sets up the initial positions
 		String rotorPositions;
@@ -581,6 +581,7 @@ public class BombeMachine{
 								
 								HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
 								if(!(settingsWithTails.isEmpty())){
+									rotorPositions = startingRotorPos(permutation, rotorPositions, cribPosition);
 									if(outputToFile){
 										if(!permutationOutputted){
 											file.print("|"+permutation);
@@ -894,7 +895,7 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the enigma machine
-	public ArrayList<ArrayList<String>> crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
+	public ArrayList<ArrayList<String>> crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails, int cribPosition){
 		ArrayList<ArrayList<String>> returnSettings = new ArrayList<ArrayList<String>>();
 		//arraylist to store each of the rotors 
 		ArrayList<Character> temp = new ArrayList<Character>();
@@ -922,9 +923,9 @@ public class BombeMachine{
 				changeRotorPermutation(rotorPermutation);
 				//we output the current permutation
 				//System.out.println(this.permutation);
-				bombeGUI.outputResultsln(this.permutation);
+				bombeGUI.changePermutation(this.permutation);
 				//we then run the crackClosures method for the closures with the current permutation
-				returnSettings.addAll(crackClosures(closures, tails));
+				returnSettings.addAll(crackClosures(closures, tails, cribPosition));
 			}
 		}
 		long runTime = System.currentTimeMillis() - startTime;
@@ -932,6 +933,8 @@ public class BombeMachine{
 		long seconds = (runTime/1000)%60;
 		bombeGUI.outputResultsln("This took: "+minutes+" minutes and " + seconds +" seconds to run");
 		//bombeGUI.outputResultsln(returnSettings);
+		
+		DecryptionGUI decryptionGUI = new DecryptionGUI(returnSettings, cipherText, this);
 		return returnSettings;
 	}
 	
@@ -1532,7 +1535,7 @@ public class BombeMachine{
 	public String previousRotorPos(String permutation, String rotorPositions){
 		rotorPositions.toLowerCase();
 		String[] rotorArray = permutation.replaceAll("\\s","").split(",");
-		String[] rotorPos = rotorPositions.split(",");
+		String[] rotorPos = rotorPositions.split("");
 		int position =((int)rotorPos[2].charAt(0)-97);
 		
 		if(position==0){
@@ -1547,7 +1550,7 @@ public class BombeMachine{
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+","+prevRotorPos;
+			prevRotorPos=(char)(position+96)+prevRotorPos;
 		}
 		else if(rotorPos[1].charAt(0)==(rotors[Integer.parseInt(rotorArray[2])-1].getTurnoverChar()+1) && rotorPos[2].charAt(0)==rotors[Integer.parseInt(rotorArray[3])-1].getTurnoverChar()+2){
 			position =((int)rotorPos[1].charAt(0)-97);
@@ -1555,7 +1558,7 @@ public class BombeMachine{
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+","+prevRotorPos;
+			prevRotorPos=(char)(position+96)+prevRotorPos;
 		}
 		else if(rotorPos[1].charAt(0)==(rotors[Integer.parseInt(rotorArray[2])-1].getTurnoverChar()) && rotorPos[2].charAt(0)==rotors[Integer.parseInt(rotorArray[3])-1].getTurnoverChar()+1){
 			position =((int)rotorPos[1].charAt(0)-97);
@@ -1563,10 +1566,10 @@ public class BombeMachine{
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+","+prevRotorPos;
+			prevRotorPos=(char)(position+96)+prevRotorPos;
 		}
 		else{
-			prevRotorPos=rotorPos[0]+","+rotorPos[1]+","+prevRotorPos;
+			prevRotorPos=rotorPos[0]+rotorPos[1]+prevRotorPos;
 			return prevRotorPos;
 		}
 		
@@ -1576,10 +1579,10 @@ public class BombeMachine{
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+","+prevRotorPos;
+			prevRotorPos=(char)(position+96)+prevRotorPos;
 		}
 		else{
-			prevRotorPos=rotorPos[0]+","+prevRotorPos;
+			prevRotorPos=rotorPos[0]+prevRotorPos;
 		}
 		return prevRotorPos;
 			
@@ -1605,5 +1608,43 @@ public class BombeMachine{
 		}
 		
 		return 26-alphabet.size();
+	}
+	
+	public char startPosForTurnover(int rotorNum, int turnoverPos){
+		/*Rotor currentRotor = (Rotor) scrambler.getFirstRotor();
+		
+		for(int i=1; i<rotorNum;i++){
+			currentRotor = (Rotor) currentRotor.getNextRotor();
+		}*/
+		Rotor currentRotor = rotors[rotorNum-1];
+		
+		char turnoverChar = currentRotor.getTurnoverChar();
+		//System.out.println(turnoverChar);
+		return (char)((((int)turnoverChar -97 - (turnoverPos-1))%26+26)%26+97);
+	}
+	
+	public String adjustStartPos(String currentRotorPositions, String currentRingPositions, String newRotorPositions){
+		currentRingPositions.toLowerCase();
+		String[] positions = currentRotorPositions.split("");
+		String[] currentRingPos = currentRingPositions.split(",");
+		String[] newRotorPos = newRotorPositions.split("");
+		
+		ArrayList<Integer> shifts = new ArrayList<Integer>();
+		
+		for(int i=0; i<positions.length;i++){
+			shifts.add((26+((int)positions[i].charAt(0)-96)-Integer.parseInt(currentRingPos[i]))%26);
+		}
+		
+		//System.out.println(shifts);
+		String newRingPos = "";
+		for(int i=0; i<shifts.size();i++){
+			int temp = (26+(((int)newRotorPos[i].charAt(0)-96)-shifts.get(i))%26)%26;
+			if(temp ==0){
+				temp =26;
+			}
+			
+			newRingPos=newRingPos + temp + ",";
+		}
+		return newRingPos.substring(0, newRingPos.length()-1);
 	}
 }

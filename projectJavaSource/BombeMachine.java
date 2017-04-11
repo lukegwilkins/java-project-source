@@ -1327,22 +1327,25 @@ public class BombeMachine{
 							//remove spaces
 							input=input.replaceAll("\\s+","");
 							
-							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							///ArrayList<String> closuresToBeUsed = new ArrayList<String>();
 							
 							int amount = Integer.parseInt(input);
-							for(int i=0;i<amount;i++){
+							ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,amount);
+							//System.out.println(usedClosuresArray);
+							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+												
+							for(int i=0;i<amount && i<usedClosuresArray.size();i++){
 								//get the closure and convert it to a string								
-								String closure = closures.get(i).get(0);
-								
+								String closure = usedClosuresArray.get(i).get(0);					
 								//converts the closure to a string
-								for(int j=1;j<closures.get(i).size()-1;j++){
-									closure=closure+","+closures.get(i).get(j);
+								for(int j=1;j<usedClosuresArray.get(i).size()-1;j++){
+									closure=closure+","+usedClosuresArray.get(i).get(j);
 								}
-								
+													
 								//adds the closure to the array list
 								closuresToBeUsed.add(closure);
 							}
-							
+												
 							System.out.println(closuresToBeUsed);
 							tails=edgePicker(closuresToBeUsed,tails);
 							System.out.println(tails);
@@ -1418,7 +1421,9 @@ public class BombeMachine{
 			System.out.println("Input output file name");
 			String fileName = scanner.nextLine();
 			
-			
+			System.out.println("Input number of closures");
+			String noOfClosuresString = scanner.nextLine();
+			int numberOfClosures = Integer.parseInt(noOfClosuresString);
 			int i=0;
 			for(ArrayList<String> cribAndCiphertext: cribsAndCiphers){
 				setCipherText(cribAndCiphertext.get(0));
@@ -1436,7 +1441,7 @@ public class BombeMachine{
 					long startTime = System.currentTimeMillis();
 					System.out.println(j);
 					file.print(""+j);
-					testCracker(j,3);
+					testCracker(j,numberOfClosures);
 					
 					long runTime = System.currentTimeMillis() - startTime;
 					long minutes = (runTime/1000)/60;
@@ -1495,15 +1500,16 @@ public class BombeMachine{
 				System.out.println(""+(i+1)+". "+closures.get(i));
 			}
 			System.out.println("Tails are: "+ tails);
+			ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,numberOfClosures);
 									
 			ArrayList<String> closuresToBeUsed = new ArrayList<String>();
 								
-			for(int i=0;i<numberOfClosures && i<closures.size();i++){
+			for(int i=0;i<numberOfClosures && i<usedClosuresArray.size();i++){
 				//get the closure and convert it to a string								
-				String closure = closures.get(i).get(0);					
+				String closure = usedClosuresArray.get(i).get(0);					
 				//converts the closure to a string
-				for(int j=1;j<closures.get(i).size()-1;j++){
-					closure=closure+","+closures.get(i).get(j);
+				for(int j=1;j<usedClosuresArray.get(i).size()-1;j++){
+					closure=closure+","+usedClosuresArray.get(i).get(j);
 				}
 									
 				//adds the closure to the array list
@@ -1527,10 +1533,10 @@ public class BombeMachine{
 	public ArrayList<ArrayList<String>> closureSelector(ArrayList<ArrayList<String>> closures, int k){
 		ArrayList<ArrayList<String>> closuresToBeUsed = new ArrayList<ArrayList<String>>();
 		
-		for(int i=0; i<k; i++){
+		for(int i=0; i<k && i<closures.size(); i++){
 			closuresToBeUsed.add(closures.get(i));
 		}
-		System.out.println(closuresToBeUsed);
+		//System.out.println(closures);
 		
 		boolean changedClosure = true;
 		while(changedClosure){
@@ -1539,9 +1545,9 @@ public class BombeMachine{
 			for(int i=0; i<closures.size();i++){
 				if(!(closuresToBeUsed.contains(closures.get(i)))){
 					ArrayList<ArrayList<String>> candidate= closuresToBeUsed;
-					for(int j=0; j<k; j++){
+					for(int j=0; j<k && j<closures.size(); j++){
 						ArrayList<ArrayList<String>> temp = new ArrayList<ArrayList<String>>();
-						for(int m=0; m<k; m++){
+						for(int m=0; m<k && m<closures.size(); m++){
 							if(m==j){
 								temp.add(closures.get(i));
 							}
@@ -1558,8 +1564,10 @@ public class BombeMachine{
 					closuresToBeUsed=candidate;
 				}
 			}
+			//System.out.println(closures);
 			//System.out.println(closuresToBeUsed);
 		}
+		//System.out.println(closuresToBeUsed);
 		return closuresToBeUsed;
 	}
 	
@@ -1644,6 +1652,31 @@ public class BombeMachine{
 		//System.out.println(newRotorPos);
 		newRotorPos=newRotorPos.substring(0, newRotorPos.length()-1);
 		return newRotorPos;
+	}
+	
+	public String adjustStartPos(String currentRotorPositions, String currentRingPositions, String newRotorPositions){
+		currentRingPositions.toLowerCase();
+		String[] positions = currentRotorPositions.split(",");
+		String[] currentRingPos = currentRingPositions.split(",");
+		String[] newRotorPos = newRotorPositions.split(",");
+		
+		ArrayList<Integer> shifts = new ArrayList<Integer>();
+		
+		for(int i=0; i<positions.length;i++){
+			shifts.add((26+((int)positions[i].charAt(0)-96)-Integer.parseInt(currentRingPos[i]))%26);
+		}
+		
+		System.out.println(shifts);
+		String newRingPos = "";
+		for(int i=0; i<shifts.size();i++){
+			int temp = (26+(((int)newRotorPos[i].charAt(0)-96)-shifts.get(i))%26)%26;
+			if(temp ==0){
+				temp =26;
+			}
+			
+			newRingPos=newRingPos + temp + ",";
+		}
+		return newRingPos;
 	}
 	
 	public void resultsMenu(ArrayList<ArrayList<String>> results, int position){
@@ -1743,6 +1776,7 @@ public class BombeMachine{
 		
 		return true;
 	}
+	
 	public String startingRotorPos(String permutation, String rotorPositions, int position){		
 		for(int i=0; i<position-1;i++){
 			rotorPositions= previousRotorPos(permutation, rotorPositions);
@@ -1832,7 +1866,7 @@ public class BombeMachine{
 	//run method for the bombe
 	public void run(){
 		String input ="";
-		System.out.println("Current rotor permutation is: "+permutation);
+		//System.out.println("Current rotor permutation is: "+permutation);
 		/*ArrayList<String> closures = new ArrayList<String>();
 		closures.add("e,14,n,20");
 		closures.add("l,16,k,6,w,12,a,4");
@@ -1898,6 +1932,18 @@ public class BombeMachine{
 		}
 	}
 	
+	public char startPosForTurnover(int rotorNum, int turnoverPos){
+		Rotor currentRotor = (Rotor) scrambler.getFirstRotor();
+		
+		for(int i=1; i<rotorNum;i++){
+			currentRotor = (Rotor) currentRotor.getNextRotor();
+		}
+		
+		char turnoverChar = currentRotor.getTurnoverChar();
+		System.out.println(turnoverChar);
+		return (char)((((int)turnoverChar -97 - (turnoverPos-1))%26+26)%26+97);
+	}
+	
 	//main method for the bombe
 	public static void main(String args[]){
 		BombeMachine bombe = new BombeMachine();
@@ -1932,7 +1978,7 @@ public class BombeMachine{
 		
 		bombe.tailSettings('a',temp,tails);*/
 		
-		ArrayList<ArrayList<String>> closures = new ArrayList<ArrayList<String>>();
+		/*ArrayList<ArrayList<String>> closures = new ArrayList<ArrayList<String>>();
 		ArrayList<String> tempTail = new ArrayList<String>();
 		tempTail.add("x");
 		tempTail.add("3");
@@ -2005,17 +2051,18 @@ public class BombeMachine{
 		
 		ArrayList<String> closuresTwo = new ArrayList<String>();
 		closuresTwo.add("a,1,c,10");
-		closuresTwo.add("b,2,f,4,g,5");
-		System.out.println(bombe.numberOfLetters(closuresTwo,tails));
-		System.out.println(bombe.closureSelector(closures,3));
-		System.out.println(bombe.alphabetCoverage(closures));
+		closuresTwo.add("b,2,f,4,g,5");*/
+		//System.out.println(bombe.numberOfLetters(closuresTwo,tails));
+		//System.out.println(bombe.closureSelector(closures,3));
+		//System.out.println(bombe.alphabetCoverage(closures));
 		
-		System.out.println(bombe.edgePicker(closuresTwo,tails));
+		//System.out.println(bombe.edgePicker(closuresTwo,tails));
 		//System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
-		System.out.println(bombe.adjustStartingPositions("n,l,g","1,1,1","9,25,17"));
-		bombe.adjustStartingPositions("v,j,w","9,25,17","1,1,1");
-		System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
-		System.out.println(bombe.previousRotorPos("b,1,2, 3", "a,b,a"));
+	//	System.out.println(bombe.adjustStartingPositions("n,l,g","1,1,1","9,25,17"));
+		//bombe.adjustStartingPositions("v,j,w","9,25,17","1,1,1");
+		//System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
+	//	System.out.println(bombe.previousRotorPos("b,1,2, 3", "a,b,a"));
+		System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
 		bombe.run();
 	}
 }

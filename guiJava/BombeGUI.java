@@ -30,6 +30,10 @@ public class BombeGUI extends JFrame
 	private ArrayList<ArrayList<String>> closures;
 	private ArrayList<ArrayList<String>> tails;
 	
+	private JLabel currentPermutation;
+	
+	private int cribPositionInt;
+	
 	public BombeGUI(){
 		bombe = new BombeMachine(this);
 		height=600;
@@ -196,12 +200,26 @@ public class BombeGUI extends JFrame
 		
 		//reset row span
 		constraints.gridheight = 1;
+		
+		constraints.gridx = 4;
+		constraints.gridy = 0;
+		
+		JLabel permutationLabel = new JLabel("Current permutation:");
+		getContentPane().add(permutationLabel, constraints);
+		
+		currentPermutation = new JLabel("test");
+		constraints.gridy=1;
+		
+		getContentPane().add(currentPermutation, constraints);
 	}
 	
 	public void generateMenu(){
 		//String cribString = 
 		//String cipher = cipherText.getText();
 		int position = Integer.parseInt(cribPosition.getText());
+		
+		cribPositionInt = position;
+		
 		bombe.setCrib(crib.getText());
 		bombe.setCipherText(cipherText.getText());
 		
@@ -250,7 +268,7 @@ public class BombeGUI extends JFrame
 		//System.out.println("hello");
 		Thread resultsThread = new Thread(new Runnable(){
 			public void run(){
-				bombe.crackEnigma(closuresToBeUsed, tailsToBeUsed);
+				bombe.crackEnigma(closuresToBeUsed, tailsToBeUsed, cribPositionInt);
 			}
 		});
 		
@@ -260,6 +278,10 @@ public class BombeGUI extends JFrame
 	
 	public void outputResultsln(String text){
 		resultsOutput.append(text+"\n");
+	}
+	
+	public void changePermutation(String permutation){
+		currentPermutation.setText(permutation);
 	}
 	
 	public void actionPerformed(ActionEvent e){
@@ -274,6 +296,9 @@ public class BombeGUI extends JFrame
 		java.awt.EventQueue.invokeLater(new Runnable(){
 				public void run(){
 					BombeGUI bombeGUI = new BombeGUI();
+					BombeMachine bombe = new BombeMachine(bombeGUI);
+		
+					System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
 				}
 			}
 		);
