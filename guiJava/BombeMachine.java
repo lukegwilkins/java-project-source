@@ -1310,7 +1310,7 @@ public class BombeMachine{
 		for(int i=0; i<k; i++){
 			closuresToBeUsed.add(closures.get(i));
 		}
-		System.out.println(closuresToBeUsed);
+		//System.out.println(closuresToBeUsed);
 		
 		boolean changedClosure = true;
 		while(changedClosure){
@@ -1646,5 +1646,13 @@ public class BombeMachine{
 			newRingPos=newRingPos + temp + ",";
 		}
 		return newRingPos.substring(0, newRingPos.length()-1);
+	}
+	
+	public ArrayList<Character> getUsableReflectors(){
+		return useableReflectors;
+	}
+	
+	public void setUseableReflectors(ArrayList<Character> reflectors){
+		useableReflectors = reflectors;
 	}
 }

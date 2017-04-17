@@ -15,6 +15,7 @@ public class BombeGUI extends JFrame
 	
 	private JButton menuButton;
 	private JButton crackEnigmaButton;
+	private JButton settingsButton;
 	
 	//private JButton secondButton;
 	private JTextField crib;
@@ -34,6 +35,8 @@ public class BombeGUI extends JFrame
 	private JLabel currentPermutation;
 	
 	private int cribPositionInt;
+	
+	private int numOfClosures;
 	
 	public BombeGUI(){
 		bombe = new BombeMachine(this);
@@ -59,10 +62,24 @@ public class BombeGUI extends JFrame
 		addButtons();
 		addOutputFields();
 		
+		numOfClosures=3;
 		pack();
 	}
 	
 	private void addButtons(){
+		settingsButton = new JButton("settings");
+		settingsButton.setVerticalTextPosition(AbstractButton.CENTER);
+		settingsButton.setHorizontalTextPosition(AbstractButton.LEADING);
+		settingsButton.setMnemonic(KeyEvent.VK_D);
+		settingsButton.setActionCommand("openSettings");
+		
+		settingsButton.addActionListener(this);
+		constraints.anchor = GridBagConstraints.CENTER;
+		constraints.gridx = 1;
+		
+		constraints.gridy = 6;
+		getContentPane().add(settingsButton, constraints);
+		
 		menuButton = new JButton("Generate menu");
 		menuButton.setVerticalTextPosition(AbstractButton.CENTER);
 		menuButton.setHorizontalTextPosition(AbstractButton.LEADING);
@@ -71,7 +88,7 @@ public class BombeGUI extends JFrame
 		
 		menuButton.addActionListener(this);
 		
-		constraints.anchor = GridBagConstraints.CENTER;
+		
 		constraints.gridx = 2;
 		
 		constraints.gridy = 6;
@@ -246,17 +263,16 @@ public class BombeGUI extends JFrame
 	}
 	
 	public void crackEnigma(){
-		int numOfClosures = 3;
-		//ArrayList<ArrayList<String>> closuresToBeUsed = bombe.closureSelector(closures,numOfClosures);
-		Collections.sort(closures, new ClosureCompactCompare());
+		ArrayList<ArrayList<String>> closuresToBeUsed = bombe.closureSelector(closures,numOfClosures);
+		//Collections.sort(closures, new ClosureCompactCompare());
 		ArrayList<String> closureStrings = new ArrayList<String>();
-		for(int i=0;i<numOfClosures && i<closures.size();i++){
+		for(int i=0;i<numOfClosures && i<closuresToBeUsed.size();i++){
 			//get the closure and convert it to a string								
-			String closure = closures.get(i).get(0);
+			String closure = closuresToBeUsed.get(i).get(0);
 			
 			//converts the closure to a string
-			for(int j=1;j<closures.get(i).size()-1;j++){
-				closure=closure+","+closures.get(i).get(j);
+			for(int j=1;j<closuresToBeUsed.get(i).size()-1;j++){
+				closure=closure+","+closuresToBeUsed.get(i).get(j);
 			}
 			
 			//adds the closure to the array list
@@ -287,6 +303,22 @@ public class BombeGUI extends JFrame
 		currentPermutation.setText(permutation);
 	}
 	
+	public void setNumOfClosures(int numOfClosures){
+		this.numOfClosures=numOfClosures;
+	}
+	
+	public int getNumOfClosures(){
+		return numOfClosures;
+	}
+	
+	public void openSettings(){
+		BombeSettings settings = new BombeSettings(this);
+	}
+	
+	public BombeMachine getBombe(){
+		return bombe;
+	}
+	
 	public void actionPerformed(ActionEvent e){
 		if("genMenu".equals(e.getActionCommand())){
 			generateMenu();
@@ -294,14 +326,18 @@ public class BombeGUI extends JFrame
 		else if("crackEnigma".equals(e.getActionCommand())){
 			crackEnigma();
 		}
+		else if("openSettings".equals(e.getActionCommand())){
+			openSettings();
+		}
 	}
+	
 	public static void main(String[] args){
 		java.awt.EventQueue.invokeLater(new Runnable(){
 				public void run(){
 					BombeGUI bombeGUI = new BombeGUI();
-					BombeMachine bombe = new BombeMachine(bombeGUI);
+					//BombeMachine bombe = new BombeMachine(bombeGUI);
 		
-					System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
+					//System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
 				}
 			}
 		);
