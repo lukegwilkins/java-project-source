@@ -1,4 +1,5 @@
 import enigmaComponents.*;
+import enigmaComponents.*;
 import java.util.*;
 import java.lang.Character;
 import graph.Graph;
@@ -886,6 +887,7 @@ public class BombeMachine{
 	//method for cracking the enigma machine
 	public ArrayList<ArrayList<String>> crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
 		ArrayList<ArrayList<String>> returnSettings = new ArrayList<ArrayList<String>>();
+		
 		//arraylist to store each of the rotors 
 		ArrayList<Character> temp = new ArrayList<Character>();
 		
@@ -920,7 +922,8 @@ public class BombeMachine{
 		long minutes = (runTime/1000)/60;
 		long seconds = (runTime/1000)%60;
 		System.out.println("This took: "+minutes+" minutes and " + seconds +" seconds to run");
-		System.out.println(returnSettings);
+		System.out.println("alpha cov "+numberOfLetters(closures, tails));
+		System.out.println(returnSettings.size());
 		return returnSettings;
 	}
 	
@@ -1491,7 +1494,7 @@ public class BombeMachine{
 			}
 				
 			//sort closures so largest are at the front
-			Collections.sort(closures, new ClosureComparator());
+			Collections.sort(closures, new ClosureCompactCompare());
 			
 			//outputs them
 			System.out.println("Closures are: ");
@@ -1500,16 +1503,16 @@ public class BombeMachine{
 				System.out.println(""+(i+1)+". "+closures.get(i));
 			}
 			System.out.println("Tails are: "+ tails);
-			ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,numberOfClosures);
+			//ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,numberOfClosures);
 									
 			ArrayList<String> closuresToBeUsed = new ArrayList<String>();
 								
-			for(int i=0;i<numberOfClosures && i<usedClosuresArray.size();i++){
+			for(int i=0;i<numberOfClosures && i<closures.size();i++){
 				//get the closure and convert it to a string								
-				String closure = usedClosuresArray.get(i).get(0);					
+				String closure = closures.get(i).get(0);					
 				//converts the closure to a string
-				for(int j=1;j<usedClosuresArray.get(i).size()-1;j++){
-					closure=closure+","+usedClosuresArray.get(i).get(j);
+				for(int j=1;j<closures.get(i).size()-1;j++){
+					closure=closure+","+closures.get(i).get(j);
 				}
 									
 				//adds the closure to the array list
@@ -2062,7 +2065,7 @@ public class BombeMachine{
 		//bombe.adjustStartingPositions("v,j,w","9,25,17","1,1,1");
 		//System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
 	//	System.out.println(bombe.previousRotorPos("b,1,2, 3", "a,b,a"));
-		System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
+		//System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
 		bombe.run();
 	}
 }

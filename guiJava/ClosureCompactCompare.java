@@ -14,7 +14,7 @@ public class ClosureCompactCompare implements Comparator<ArrayList<String>>{
 		}
 		
 		for(int i=1; i<listTwo.size();i+=2){
-			if(Integer.parseInt(listTwo.get(i))>listOneNo){
+			if(Integer.parseInt(listTwo.get(i))>listTwoNo){
 				listTwoNo=Integer.parseInt(listTwo.get(i));
 			}
 		}

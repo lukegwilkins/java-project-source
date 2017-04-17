@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 import java.util.ArrayList;
+import java.util.*;
 
 public class BombeGUI extends JFrame
 					  implements ActionListener{
@@ -246,8 +247,9 @@ public class BombeGUI extends JFrame
 	
 	public void crackEnigma(){
 		int numOfClosures = 3;
-		ArrayList<String> closuresToBeUsed = new ArrayList<String>();
-		
+		//ArrayList<ArrayList<String>> closuresToBeUsed = bombe.closureSelector(closures,numOfClosures);
+		Collections.sort(closures, new ClosureCompactCompare());
+		ArrayList<String> closureStrings = new ArrayList<String>();
 		for(int i=0;i<numOfClosures && i<closures.size();i++){
 			//get the closure and convert it to a string								
 			String closure = closures.get(i).get(0);
@@ -258,17 +260,18 @@ public class BombeGUI extends JFrame
 			}
 			
 			//adds the closure to the array list
-			closuresToBeUsed.add(closure);
+			closureStrings.add(closure);
+			System.out.println(closure);
 		}
 		//update the GUI
 		//repaint();
 		
 		//give crackEnigma its own thread
-		ArrayList<ArrayList<String>> tailsToBeUsed = bombe.edgePicker(closuresToBeUsed, tails);
+		ArrayList<ArrayList<String>> tailsToBeUsed = bombe.edgePicker(closureStrings, tails);
 		//System.out.println("hello");
 		Thread resultsThread = new Thread(new Runnable(){
 			public void run(){
-				bombe.crackEnigma(closuresToBeUsed, tailsToBeUsed, cribPositionInt);
+				bombe.crackEnigma(closureStrings, tailsToBeUsed, cribPositionInt);
 			}
 		});
 		
