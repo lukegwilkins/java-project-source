@@ -277,7 +277,6 @@ public class BombeGUI extends JFrame
 			
 			//adds the closure to the array list
 			closureStrings.add(closure);
-			System.out.println(closure);
 		}
 		//update the GUI
 		//repaint();

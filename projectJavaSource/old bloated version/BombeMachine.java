@@ -1,4 +1,5 @@
 import enigmaComponents.*;
+import enigmaComponents.*;
 import java.util.*;
 import java.lang.Character;
 import graph.Graph;
@@ -21,11 +22,9 @@ public class BombeMachine{
 	private PrintWriter file;
 	private boolean outputToFile;
 	private Plugboard plugboard;
-	private BombeGUI bombeGUI;
 	
 	//constructor for the BombeMachine
-	public BombeMachine(BombeGUI bombeGUI){
-		this.bombeGUI = bombeGUI;
+	public BombeMachine(){
 		outputToFile=false;
 		//printer used for the enigma components
 		printer = new Printer();
@@ -393,7 +392,7 @@ public class BombeMachine{
 		}
 		
 		//System.out.println("Hello");
-		//graph = new Graph(menu);
+		graph = new Graph(menu);
 		//System.out.println("hello 2");
 	}
 	
@@ -463,7 +462,7 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the closures
-	public ArrayList<ArrayList<String>> crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails, int cribPosition){
+	public ArrayList<ArrayList<String>> crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
 		//System.out.println(tails);
 		//stores the rotor positions and sets up the initial positions
 		String rotorPositions;
@@ -581,7 +580,6 @@ public class BombeMachine{
 								
 								HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
 								if(!(settingsWithTails.isEmpty())){
-									rotorPositions = startingRotorPos(permutation, rotorPositions, cribPosition);
 									if(outputToFile){
 										if(!permutationOutputted){
 											file.print("|"+permutation);
@@ -589,8 +587,8 @@ public class BombeMachine{
 										file.print("@"+rotorPositions);
 									}
 									else{
-										bombeGUI.outputResultsln("rotor permutation is "+permutation);
-										bombeGUI.outputResultsln("rotor positions are "+rotorPositions);
+										System.out.println("rotor permutation is "+permutation);
+										System.out.println("rotor positions are "+rotorPositions);
 									}
 									//for each of the plugboard settings it converts it to a string and outputs it
 									
@@ -616,7 +614,7 @@ public class BombeMachine{
 										file.print("#"+outputString);
 									}
 									else{
-										bombeGUI.outputResultsln(outputString);
+										System.out.println(outputString);
 									}
 								}
 							}
@@ -625,39 +623,31 @@ public class BombeMachine{
 				}
 				//else if the size of closurePlugboardSettings is 1, i.e. there was 1 closure then we just output all of its settings
 				else{
-					//System.out.println("rotor permutation is "+permutation);
-					//System.out.println("rotor positions are "+rotorPositions);
+					System.out.println("rotor permutation is "+permutation);
+					System.out.println("rotor positions are "+rotorPositions);
 					String outputString;			
 					for(HashMap<Character,Character> plugboardSettings: closuresPlugboardSettings.get(0)){
 						outputString="";
-						HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
+						ArrayList<String> temp = new ArrayList<String>();
+						temp.add(permutation);
+						temp.add(rotorPositions);
 						
-						if(!(settingsWithTails.isEmpty())){
-							ArrayList<String> temp = new ArrayList<String>();
-							temp.add(permutation);
-							temp.add(rotorPositions);
-							
-							bombeGUI.outputResultsln("rotor permutation is "+permutation);
-							bombeGUI.outputResultsln("rotor positions are "+rotorPositions);
-							
-							for(Character key: plugboardSettings.keySet()){
-								if(outputString.indexOf(key)==-1){
-									if((int)key < (int)plugboardSettings.get(key)){
-										outputString+=key+"/"+plugboardSettings.get(key)+", ";
-									}
-									else{
-										outputString+=plugboardSettings.get(key)+"/"+key+", ";
-									}
+						for(Character key: plugboardSettings.keySet()){
+							if(outputString.indexOf(key)==-1){
+								if((int)key < (int)plugboardSettings.get(key)){
+									outputString+=key+"/"+plugboardSettings.get(key)+", ";
+								}
+								else{
+									outputString+=plugboardSettings.get(key)+"/"+key+", ";
 								}
 							}
-							
-							
-							outputString=outputString.substring(0,outputString.length()-1);
-							temp.add(outputString);
-							returnSettings.add(temp);
-							//System.out.println(outputString);
-							bombeGUI.outputResultsln(outputString);
 						}
+						
+						
+						outputString=outputString.substring(0,outputString.length()-1);
+						temp.add(outputString);
+						returnSettings.add(temp);
+						System.out.println(outputString);
 					}
 				}
 			}
@@ -677,7 +667,7 @@ public class BombeMachine{
 			
 			HashMap<Character,Character> temp = settingsFromTail(rightRotorPos, plugboardSettings, tail);
 			if(temp.isEmpty()){
-				//System.out.println("A tail was inconsistent");
+				System.out.println("A tail was inconsistent");
 				return new HashMap<Character,Character>();
 			}
 			else{
@@ -895,8 +885,9 @@ public class BombeMachine{
 	}
 	
 	//method for cracking the enigma machine
-	public ArrayList<ArrayList<String>> crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails, int cribPosition){
+	public ArrayList<ArrayList<String>> crackEnigma(ArrayList<String> closures, ArrayList<ArrayList<String>> tails){
 		ArrayList<ArrayList<String>> returnSettings = new ArrayList<ArrayList<String>>();
+		
 		//arraylist to store each of the rotors 
 		ArrayList<Character> temp = new ArrayList<Character>();
 		
@@ -922,19 +913,17 @@ public class BombeMachine{
 				//we change the rotor permutation
 				changeRotorPermutation(rotorPermutation);
 				//we output the current permutation
-				//System.out.println(this.permutation);
-				bombeGUI.changePermutation(this.permutation);
+				System.out.println(this.permutation);
 				//we then run the crackClosures method for the closures with the current permutation
-				returnSettings.addAll(crackClosures(closures, tails, cribPosition));
+				returnSettings.addAll(crackClosures(closures, tails));
 			}
 		}
 		long runTime = System.currentTimeMillis() - startTime;
 		long minutes = (runTime/1000)/60;
 		long seconds = (runTime/1000)%60;
-		bombeGUI.outputResultsln("This took: "+minutes+" minutes and " + seconds +" seconds to run");
-		//bombeGUI.outputResultsln(returnSettings);
-		
-		DecryptionGUI decryptionGUI = new DecryptionGUI(returnSettings, cipherText, this);
+		System.out.println("This took: "+minutes+" minutes and " + seconds +" seconds to run");
+		System.out.println("alpha cov "+numberOfLetters(closures, tails));
+		System.out.println(returnSettings.size());
 		return returnSettings;
 	}
 	
@@ -1215,103 +1204,380 @@ public class BombeMachine{
 			}
 		}
 		
-		//returns the paths
 		return paths;
 	}
 	
-	//generates closures and tails for the current crib and ciphertext
-	public ArrayList<ArrayList<ArrayList<String>>> generateClosuresAndTails(int cribPosition){
-		//generates the menu for the crib and ciphertext at the inputted position
-		generateMenu(cribPosition);
-		
-		//gets the paths for the menu
-		ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
-		ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
-		ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
-		
-		//splits the paths into closures and tails
-		for(ArrayList<String> path: paths){
-			if(path.get(0).equals(path.get(path.size()-1))){
-				closures.add(path);
+	//options menu for editing the crib or ciphertext
+	public void editCribOrCipher(){
+			
+			String input ="";
+			while(!(input.equals("menu"))){
+				//presents the menu options 
+				System.out.println("Current crib is: "+crib);
+				System.out.println("Current ciphertext is: "+cipherText);				
+				System.out.println("1. edit crib");
+				System.out.println("2. edit cipherText");
+				System.out.println("Type menu to return to the main menu");
+				
+				//prompts the user for input
+				input = scanner.nextLine();
+				
+				//if the user inputted 1 then it prompts them to input a new crib and stores it
+				if(input.equals("1")){
+					System.out.println("Type in the new crib");
+					crib=scanner.nextLine();
+				}
+				
+				//if the user inputted 2 then it prompts them for the ciphertext and stores it
+				else if(input.equals("2")){
+					System.out.println("Type in the ciphertext");
+					cipherText=scanner.nextLine();
+				}
 			}
-			else{
-				tails.add(path);
-			}
-		}
-		
-		//sort closures so largest are at the front
-		Collections.sort(closures, new ClosureComparator());
-		ArrayList<ArrayList<ArrayList<String>>> resultsArray = new ArrayList<ArrayList<ArrayList<String>>>();
-		
-		//add the closures and tails to results array
-		resultsArray.add(closures);
-		resultsArray.add(tails);
-		
-		//returns the results array
-		return resultsArray;
 	}
 	
-	//method used to pick which closures to use
-	public ArrayList<ArrayList<String>> closureSelector(ArrayList<ArrayList<String>> closures, int k){
+	//generates closures and tails for the current crib and ciphertext
+	public void generateClosuresAndTails(){
+		String input="";
+		while(!(input.equals("menu"))){
+			//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
+			System.out.println("Current crib is: "+crib);
+			System.out.println("Current ciphertext is: "+cipherText);
+			System.out.println("input position of crib in the ciphertext");
+			System.out.println("Type menu to return to the main menu");
+			
+			input = scanner.nextLine();
+			
+			if(!(input.equals("menu"))){
+				int position = Integer.parseInt(input);
+				//generates the menu for the crib and ciphertext at the inputted position
+				generateMenu(position);
+				
+				//gets the paths for the menu
+				ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+				ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+				ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
+				
+				//splits the paths into closures and tails
+				for(ArrayList<String> path: paths){
+					if(path.get(0).equals(path.get(path.size()-1))){
+						closures.add(path);
+					}
+					else{
+						tails.add(path);
+					}
+				}
+				
+				//sort closures so largest are at the front
+				Collections.sort(closures, new ClosureComparator());
+				//outputs them
+				System.out.println("Closures are: ");
+				//make closures nicer
+				for(int i=0;i<closures.size();i++){
+					System.out.println(""+(i+1)+". "+closures.get(i));
+				}
+				System.out.println("Tails are: "+ tails);
+				
+				//prompts user for which closures to use for cracking the enigma machine
+				while(!(input.equals("menu"))){
+					System.out.println("Type menu to go back to the main menu");
+					System.out.println("Type \"manual\" if you want to manually select closures, or type \"amount\" if you want to just say how many closures to use");
+					//System.out.println("Or type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
+					
+					//gets input
+					input=scanner.nextLine();
+					if(!(input.equals("menu"))){
+						
+						ArrayList<ArrayList<String>> results= new ArrayList<ArrayList<String>>();
+						//remove spaces
+						input=input.replaceAll("\\s+","");
+						if(input.equals("manual")){
+							System.out.println("Type which closures you want to use as a list, e.g. if you wish to use closures 2,4,6 & 8, type 2,4,6,8");
+					
+							//gets input
+							input=scanner.nextLine();
+							//remove spaces
+							input=input.replaceAll("\\s+","");
+						
+							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							String[] closureNumbers=input.split(",");
+						
+							for(String closureNumber:closureNumbers){
+								//gets the closure index
+								int index = Integer.parseInt(closureNumber)-1;
+								String closure = closures.get(index).get(0);
+								
+								//converts the closure to a string
+								for(int i=1;i<closures.get(index).size()-1;i++){
+									closure=closure+","+closures.get(index).get(i);
+								}
+								
+								//adds the closure to the array list
+								closuresToBeUsed.add(closure);
+							}
+							
+							System.out.println(closuresToBeUsed);
+							tails=edgePicker(closuresToBeUsed,tails);
+							System.out.println(tails);
+							//cracks enigma using the closures
+							
+							results=crackEnigma(closuresToBeUsed, tails);
+						}
+						else if(input.equals("amount")){
+							System.out.println("Type the amount of closures you want to use");
+							//gets input
+							input=scanner.nextLine();
+							//remove spaces
+							input=input.replaceAll("\\s+","");
+							
+							///ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+							
+							int amount = Integer.parseInt(input);
+							ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,amount);
+							//System.out.println(usedClosuresArray);
+							ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+												
+							for(int i=0;i<amount && i<usedClosuresArray.size();i++){
+								//get the closure and convert it to a string								
+								String closure = usedClosuresArray.get(i).get(0);					
+								//converts the closure to a string
+								for(int j=1;j<usedClosuresArray.get(i).size()-1;j++){
+									closure=closure+","+usedClosuresArray.get(i).get(j);
+								}
+													
+								//adds the closure to the array list
+								closuresToBeUsed.add(closure);
+							}
+												
+							System.out.println(closuresToBeUsed);
+							tails=edgePicker(closuresToBeUsed,tails);
+							System.out.println(tails);
+							//System.out.println(tails);
+							//cracks enigma using the closures
+							results=crackEnigma(closuresToBeUsed, tails);
+						}
+						
+						resultsMenu(results, position);
+					}
+				}
+			}
+		}
+	}
+	
+	//method to set what reflectors will be used in cracking
+	public void setUseableReflectors(){
 		
+		String input ="";
+		System.out.println("made this prettier.\nCurrent reflectors are "+useableReflectors);
+		
+		while(!(input.equals("menu"))){
+			System.out.println("Current Reflectors for use are a,b,c.");
+			System.out.println("Input which reflectors you want to use, e.g. if you want to use just a, type a, if you want to use a and b type a,b");
+			System.out.println("Type menu to exit");
+			
+			//gets input and splits it by comma
+			input=scanner.nextLine();
+			if(!(input.equals("menu"))){
+				input = input.replaceAll("\\s+","");
+				String[] inputtedReflectors=input.split(",");
+			
+				//makes a new ArrayList object and adds each reflector to it
+				useableReflectors=new ArrayList<Character>();
+				for(String reflector:inputtedReflectors){
+					useableReflectors.add(reflector.charAt(0));
+				}
+			
+				System.out.println(useableReflectors);
+			}
+		}
+	}
+	
+	//method for testing the bombe
+	public void bombeTest(){
+		try{
+			String input = "";
+			System.out.println("Input file name");
+			input = scanner.nextLine();
+			String contents = new Scanner(new File(input)).useDelimiter("\\Z").next();
+			
+			//String[] lines = ;
+			ArrayList<String> lines = new ArrayList<String>(Arrays.asList(contents.split("\n")));
+			
+			ArrayList<ArrayList<String>> cribsAndCiphers = new ArrayList<ArrayList<String>>();
+			ArrayList<String> reflectorSettings = new ArrayList<String>();
+			for(String line:lines){				
+				
+				String[] lineData = line.split("\\),");
+				String data=lineData[lineData.length-1].replaceAll("\\s|\\(|\\)","");
+				String[] permutation = lineData[0].replaceAll("\\s|\\(|\\)","").split(",");
+				reflectorSettings.add(permutation[0].toLowerCase());
+				String[] dataArray = data.split(",");
+				
+				ArrayList<String> temp = new ArrayList<String>();
+				temp.add(dataArray[0]);
+				temp.add(dataArray[2]);
+				
+				cribsAndCiphers.add(temp);
+			}
+			//System.out.println(cribsAndCiphers);
+			
+			System.out.println("Input output file name");
+			String fileName = scanner.nextLine();
+			
+			System.out.println("Input number of closures");
+			String noOfClosuresString = scanner.nextLine();
+			int numberOfClosures = Integer.parseInt(noOfClosuresString);
+			int i=0;
+			for(ArrayList<String> cribAndCiphertext: cribsAndCiphers){
+				setCipherText(cribAndCiphertext.get(0));
+				setCrib(cribAndCiphertext.get(1));
+				useableReflectors= new ArrayList<Character>();
+				useableReflectors.add(reflectorSettings.get(i).charAt(0));
+				outputToFile=true;
+				file = new PrintWriter(new FileOutputStream(fileName+i+".txt",true), true);
+				file.println(cribAndCiphertext.get(0)+","+cribAndCiphertext.get(1));
+				
+				System.out.println(cribAndCiphertext.get(0).length());
+				System.out.println(cribAndCiphertext.get(1).length());
+				
+				for(int j=1; j<=(cribAndCiphertext.get(0).length()-cribAndCiphertext.get(1).length()); j++){
+					long startTime = System.currentTimeMillis();
+					System.out.println(j);
+					file.print(""+j);
+					testCracker(j,numberOfClosures);
+					
+					long runTime = System.currentTimeMillis() - startTime;
+					long minutes = (runTime/1000)/60;
+					long seconds = (runTime/1000)%60;
+					//System.out.println(minutes+":"+seconds);
+					file.println("\n"+minutes+":"+seconds);
+					if(graph!=null){
+						graph.getGraphDrawer().setVisible(false);
+						graph.getGraphDrawer().dispose();
+					}
+				}
+				
+				i++;
+				file.close();
+			}
+			
+			outputToFile=false;
+		}
+		catch(Exception e){
+			System.out.println(e);
+			System.out.println("There was an error reading the file");
+		}
+	}
+	
+	public void testCracker(int cribPosition, int numberOfClosures){
+		//outputs the current crib and ciphertext and then asks the user for the position of the crib in the ciphertext
+		System.out.println("Current crib is: "+crib);
+		System.out.println("Current ciphertext is: "+cipherText);
+		String cribCipherText=cipherText.substring(cribPosition-1, cribPosition-1 + crib.length());
+		if(validCribAndCipher(crib,cribCipherText)){
+			//generates the menu for the crib and ciphertext at the inputted position
+			generateMenu(cribPosition);
+					
+			//gets the paths for the menu
+			ArrayList<ArrayList<String>> paths= depthFirstSearch(getMenu());
+			ArrayList<ArrayList<String>> closures= new ArrayList<ArrayList<String>>();
+			ArrayList<ArrayList<String>> tails =  new ArrayList<ArrayList<String>>();
+					
+			//splits the paths into closures and tails
+			for(ArrayList<String> path: paths){
+				if(path.get(0).equals(path.get(path.size()-1))){
+					closures.add(path);
+				}
+				else{
+					tails.add(path);
+				}
+			}
+				
+			//sort closures so largest are at the front
+			Collections.sort(closures, new ClosureCompactCompare());
+			
+			//outputs them
+			System.out.println("Closures are: ");
+			//make closures nicer
+			for(int i=0;i<closures.size();i++){
+				System.out.println(""+(i+1)+". "+closures.get(i));
+			}
+			System.out.println("Tails are: "+ tails);
+			//ArrayList<ArrayList<String>> usedClosuresArray=closureSelector(closures,numberOfClosures);
+									
+			ArrayList<String> closuresToBeUsed = new ArrayList<String>();
+								
+			for(int i=0;i<numberOfClosures && i<closures.size();i++){
+				//get the closure and convert it to a string								
+				String closure = closures.get(i).get(0);					
+				//converts the closure to a string
+				for(int j=1;j<closures.get(i).size()-1;j++){
+					closure=closure+","+closures.get(i).get(j);
+				}
+									
+				//adds the closure to the array list
+				closuresToBeUsed.add(closure);
+			}
+								
+			System.out.println(closuresToBeUsed);
+			
+			tails=edgePicker(closuresToBeUsed,tails);		
+			System.out.println(tails);
+			//cracks enigma using the closures
+			file.print("|"+numberOfLetters(closuresToBeUsed, tails));
+			crackEnigma(closuresToBeUsed, tails);
+		}
+		else{
+			file.print("|invalid");
+			System.out.println("invalid position");
+		}
+	}
+	
+	public ArrayList<ArrayList<String>> closureSelector(ArrayList<ArrayList<String>> closures, int k){
 		ArrayList<ArrayList<String>> closuresToBeUsed = new ArrayList<ArrayList<String>>();
 		
 		for(int i=0; i<k && i<closures.size(); i++){
 			closuresToBeUsed.add(closures.get(i));
 		}
+		//System.out.println(closures);
 		
-		//run until we do not change which closures we are using
 		boolean changedClosure = true;
 		while(changedClosure){
 			changedClosure=false;
 			
-			//for each closure check if we can increase the alphabet coverage by replacing one of the closures in the current
-			//list of closures to be used
 			for(int i=0; i<closures.size();i++){
 				if(!(closuresToBeUsed.contains(closures.get(i)))){
-					
-					//store the current list of closureToBeUsed
 					ArrayList<ArrayList<String>> candidate= closuresToBeUsed;
-					
-					//try replacing the closure at every position to see if it increase the alphabet coverage
-					for(int j=0; j<k && i<closures.size(); j++){
-						//create a temporary arraylist to store the new set of closures
+					for(int j=0; j<k && j<closures.size(); j++){
 						ArrayList<ArrayList<String>> temp = new ArrayList<ArrayList<String>>();
-						//add the closures to temp
-						for(int m=0; m<k && i<closures.size(); m++){
-							//if m==j then this is the closure we are replacing so we add closure i
+						for(int m=0; m<k && m<closures.size(); m++){
 							if(m==j){
 								temp.add(closures.get(i));
 							}
-							//else we just add the other closures from closuresToBeUsed
 							else{
 								temp.add(closuresToBeUsed.get(m));
 							}
 						}
 						
-						//if temp has more coverage then candidate then we replace candidate with temp
 						if(alphabetCoverage(temp)>alphabetCoverage(candidate)){
 							candidate=temp;
 							changedClosure=true;
 						}
 					}
-					//set closuresToBeUsed as candidate
 					closuresToBeUsed=candidate;
 				}
 			}
+			//System.out.println(closures);
+			//System.out.println(closuresToBeUsed);
 		}
-		//return closureToBeUsed
+		//System.out.println(closuresToBeUsed);
 		return closuresToBeUsed;
 	}
 	
-	//method that gets how much of the alphabet is covered by the closures
 	public int alphabetCoverage(ArrayList<ArrayList<String>> closures){
-		//creates an arraylist to store the letters covered by the closures
 		ArrayList<String> letters= new ArrayList<String>();
 		
-		//for each closure add its new letters to the letters arraylist
 		for(int i=0; i<closures.size(); i++){
-			//for each letter in the closure if it isn't in letters add it
 			for(int j=0; j<closures.get(i).size(); j+=2){
 				if(!(letters.contains(closures.get(i).get(j)))){
 					letters.add(closures.get(i).get(j));
@@ -1319,91 +1585,202 @@ public class BombeMachine{
 			}
 		}
 		
-		//return the amount of letters covered by the closures
 		return letters.size();
 	}
 	
-	//method that is used to pick which edges to use without increase the position range in the crib
 	public ArrayList<ArrayList<String>> edgePicker(ArrayList<String> closureStrings, ArrayList<ArrayList<String>> tails){
-		
-		//sets up an arraylist to store the closures once they have been covered to arraylists
 		ArrayList<ArrayList<String>> closures = new ArrayList<ArrayList<String>>();
-		//coverts the closures to arraylists
 		for(int i=0; i<closureStrings.size();i++){
 			closures.add(new ArrayList<String>(Arrays.asList(closureStrings.get(i).split(","))));
 		}
 		
-		//gets the lowest position used and the highest position used
 		int lowestPosition = 50;
 		int highestPosition = 0;
-		
-		//sets up an arraylist to store which edges will be used
 		ArrayList<ArrayList<String>> returnList = new ArrayList<ArrayList<String>>();
-		//for each closure check if it has position lower or higher than the lowest and highest positions
 		for(int i=0;i<closures.size();i++){
-			//for each position in the closure check if it is lower or higher than the lowest and highest positions
 			for(int j=1; j<closures.get(i).size(); j+=2){
-				//convert the position to an integers
 				int temp=Integer.parseInt(closures.get(i).get(j));
 				
-				//if the current position is higher than the highest position then replace the highest position
 				if(temp>highestPosition){
 					highestPosition=temp;
 				}
-				//if the current position is lower than the lowest position then replace the lowest position
 				else if(temp<lowestPosition){
 					lowestPosition=temp;
 				}
 			}
 		}
 		
-		//for each tail if it has a position higher or lower than the lowest and highest positions then we don't return it
+		System.out.println(lowestPosition);
+		System.out.println(highestPosition);
+		
 		for(int i=0; i<tails.size();i++){
-			
-			//get the current tails lowest and highest position
 			int tailLowest=50;
 			int tailHighest=0;
 			
 			for(int j=1; j<tails.get(i).size(); j+=2){
 				int temp=Integer.parseInt(tails.get(i).get(j));
 				
-				//if the current position is higher than the tails highest position then we change tailHighest
 				if(temp>tailHighest){
 					tailHighest=temp;
 				}
-				//if the current position is lower than the tails lowest position then we change tailLowest
 				else if(temp<tailLowest){
 					tailLowest=temp;
 				}
 			}
 			
-			//if the tails highest position is smaller than highestPosition and the tails lowest position is larger than
-			//lowestPosition then we add it to returnList
-			if(tailHighest<=highestPosition && tailLowest>=lowestPosition){
+			if(tailHighest<highestPosition && tailLowest>lowestPosition){
 				returnList.add(tails.get(i));
 			}
 		}
-		
-		//returns the list of tails we can use.
 		return returnList;
 	}
 	
-	//checks that the given crib and cipher of the crib is valid
+	public String adjustStartingPositions(String currentRotorPositions, String currentRingPositions, String newRingPositions){
+		currentRingPositions.toLowerCase();
+		String[] positions = currentRotorPositions.split(",");
+		String[] currentRingPos = currentRingPositions.split(",");
+		String[] newRingPos = newRingPositions.split(",");
+		
+		ArrayList<Integer> shifts = new ArrayList<Integer>();
+		
+		for(int i=0; i<positions.length;i++){
+			shifts.add((26+((int)positions[i].charAt(0)-96)-Integer.parseInt(currentRingPos[i]))%26);
+		}
+		System.out.println(shifts);
+		String newRotorPos = "";
+		for(int i=0; i<shifts.size();i++){
+			newRotorPos=newRotorPos + (char)(96+(shifts.get(i)+Integer.parseInt(newRingPos[i]))%26) + ",";
+		}
+		
+		//System.out.println(newRotorPos);
+		newRotorPos=newRotorPos.substring(0, newRotorPos.length()-1);
+		return newRotorPos;
+	}
+	
+	public String adjustStartPos(String currentRotorPositions, String currentRingPositions, String newRotorPositions){
+		currentRingPositions.toLowerCase();
+		String[] positions = currentRotorPositions.split(",");
+		String[] currentRingPos = currentRingPositions.split(",");
+		String[] newRotorPos = newRotorPositions.split(",");
+		
+		ArrayList<Integer> shifts = new ArrayList<Integer>();
+		
+		for(int i=0; i<positions.length;i++){
+			shifts.add((26+((int)positions[i].charAt(0)-96)-Integer.parseInt(currentRingPos[i]))%26);
+		}
+		
+		System.out.println(shifts);
+		String newRingPos = "";
+		for(int i=0; i<shifts.size();i++){
+			int temp = (26+(((int)newRotorPos[i].charAt(0)-96)-shifts.get(i))%26)%26;
+			if(temp ==0){
+				temp =26;
+			}
+			
+			newRingPos=newRingPos + temp + ",";
+		}
+		return newRingPos;
+	}
+	
+	public void resultsMenu(ArrayList<ArrayList<String>> results, int position){
+		for(int i=0;i<results.size();i++){
+			System.out.println(""+(i+1)+". "+results.get(i));
+		}
+		System.out.println("Type the number of the results you wish to use, type menu to go back to the main menu");
+		
+		String input="";
+		input=scanner.nextLine();
+		getRestOfSettings(results.get(Integer.parseInt(input)-1), position);
+	}
+	
+	public void getRestOfSettings(ArrayList<String> settings, int position){
+		String rotorPositions = "";
+		String ringPositions="9,25,17";
+		for(int i=0; i<settings.get(1).length(); i++){
+			rotorPositions=rotorPositions+settings.get(1).charAt(i)+",";
+		}
+		
+		rotorPositions = rotorPositions.substring(0, rotorPositions.length()-1);
+		String startingPositions = startingRotorPos(settings.get(0),rotorPositions, position);
+		startingPositions = adjustStartingPositions(startingPositions,"1,1,1",ringPositions);
+		settings.set(1, startingPositions);
+		String input = "";
+		while(!input.equals("menu")){
+			setEnigma(settings, ringPositions);
+			System.out.println("Permutation is: " + settings.get(0).toString());
+			System.out.println("Starting positions are: " + startingPositions);
+			System.out.println("Ring positions are: " + ringPositions);
+			System.out.println("plugboard settings are: " + settings.get(2));
+			Rotor firstRotor = (Rotor)scrambler.getFirstRotor();
+			System.out.println(firstRotor.getCharOnTop());
+			System.out.println(((Rotor)firstRotor.getNextRotor()).getCharOnTop());
+			System.out.println("Ciphertext decrypts as:\n" + decryptCipherText());
+			System.out.println("input new ring positions,");
+			scanner.nextLine();
+		}
+	}
+	
+	public void setEnigma(ArrayList<String> settings, String ringSettings){
+		changeRotorPermutation(settings.get(0).replaceAll("\\s","").replace(",",""));
+		
+		String[] ringPositions = ringSettings.split(",");
+		String[] rotorPositions = settings.get(1).split(",");
+		//System.out.println(settings.get(1));
+		//System.out.println(settings.get(1).length());
+		Rotor prevRotor = (Rotor) scrambler.getFirstRotor();
+		for(int i = (rotorPositions.length-1);i>=0;i--){
+			prevRotor.setPosition(rotorPositions[i].charAt(0));	
+			prevRotor.setRingPosition(Integer.parseInt(ringPositions[i]));
+			System.out.println(Integer.parseInt(ringPositions[i]));
+			if(prevRotor.getNextRotor() instanceof Rotor){
+				prevRotor = (Rotor)prevRotor.getNextRotor();
+			}
+		}
+		
+		ArrayList<String> plugboardSettings = new ArrayList<String>(Arrays.asList(settings.get(2).replaceAll("\\s","").split(",")));
+		int i=0;
+		while(i<plugboardSettings.size()){
+			if(plugboardSettings.get(i).charAt(0)==plugboardSettings.get(i).charAt(plugboardSettings.get(i).length()-1)){
+				plugboardSettings.remove(i);
+			}
+			else{
+				i++;
+			}
+		}
+		System.out.println(plugboardSettings);
+		plugboard.setSwapMapping(plugboardSettings);		
+	}
+	
+	//need to set up double shift
+	public String decryptCipherText(){
+		String returnString="";
+		plugboard.disablePrinter();
+		boolean crackingMode = scrambler.getCrackingMode();
+		scrambler.setCrackingMode(false);
+		
+		for(int i=0;i<cipherText.length();i++){
+			//System.out.println(cipherText.charAt(i));
+			char temp = plugboard.encrypt(cipherText.charAt(i));
+			returnString+= temp;
+			//System.out.println(temp+"\n");
+		}
+		
+		scrambler.setCrackingMode(crackingMode);
+		return returnString;
+	}
+	
 	public boolean validCribAndCipher(String crib, String cipher){
-		//for each letter in the crib check that it isn't the same as the corresponding letter in the ciphertext
+		//boolean valid = true;
 		for(int i=0; i<crib.length();i++){
-			//if any letters at the same position in the crib and the cipher match return false
 			if(crib.charAt(i)==cipher.charAt(i)){
 				return false;
 			}
 		}
-		//else it is valid
+		
 		return true;
 	}
 	
-	//gets the starting rotor position for a given rotor permutation and rotor position where the rotor position is a given amount of positions from the start position
-	public String startingRotorPos(String permutation, String rotorPositions, int position){
-		//call previousRotorPos position-1 times to get the starting rotor position (-1 since the first position is called position 1 not position 0)
+	public String startingRotorPos(String permutation, String rotorPositions, int position){		
 		for(int i=0; i<position-1;i++){
 			rotorPositions= previousRotorPos(permutation, rotorPositions);
 		}
@@ -1411,86 +1788,66 @@ public class BombeMachine{
 		return rotorPositions;
 	}
 	
-	//takes a rotor permutation and rotor positions and figures out which rotor position occurred before it
 	public String previousRotorPos(String permutation, String rotorPositions){
-		//gets the rotor permutation and rotor position
 		rotorPositions.toLowerCase();
 		String[] rotorArray = permutation.replaceAll("\\s","").split(",");
-		String[] rotorPos = rotorPositions.split("");
-		
-		//gets the previous rotor position for the right rotor
+		String[] rotorPos = rotorPositions.split(",");
 		int position =((int)rotorPos[2].charAt(0)-97);
 		
-		//if we go below 1 we wrap around to 26
 		if(position==0){
 			position=26;
 		}
 		
-		//gets the letter version of right rotors previous position
 		String prevRotorPos = ""+(char)(position+96);
-		
-		//if the right rotor's previous position is a turnover position then we also rotate the middle rotor back by 1
+		//System.out.println(rotors[Integer.parseInt(rotorArray[3])].getTurnoverChar());
 		if((char)(position+96)==rotors[Integer.parseInt(rotorArray[3])-1].getTurnoverChar()){
-			
-			//gets the middle rotor's previous position
 			position =((int)rotorPos[1].charAt(0)-97);
-			//if we go below 1 we wrap around to 26
 			if(position==0){
 				position=26;
 			}
 			
-			//adds the middle rotor position to prevRotorPos
-			prevRotorPos=(char)(position+96)+prevRotorPos;
+			prevRotorPos=(char)(position+96)+","+prevRotorPos;
 		}
-		
-		//if the middle rotor is at the position just after a turnover position and the right rotor is at a position 2 after a turnover position,
-		//then we rotate the middle rotor back one due to the double shift phenomenon. The permutation also includes the reflector at the start
-		//so we need to take that into account when seeing which rotor is where in the rotorArray
 		else if(rotorPos[1].charAt(0)==(rotors[Integer.parseInt(rotorArray[2])-1].getTurnoverChar()+1) && rotorPos[2].charAt(0)==rotors[Integer.parseInt(rotorArray[3])-1].getTurnoverChar()+2){
-			
-			//rotates the middle rotor back by one
 			position =((int)rotorPos[1].charAt(0)-97);
-			
 			if(position==0){
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+prevRotorPos;
+			prevRotorPos=(char)(position+96)+","+prevRotorPos;
 		}
-		//else the other rotors didn't rotate so we can add the current positions and return the previous rotor position
+		else if(rotorPos[1].charAt(0)==(rotors[Integer.parseInt(rotorArray[2])-1].getTurnoverChar()) && rotorPos[2].charAt(0)==rotors[Integer.parseInt(rotorArray[3])-1].getTurnoverChar()+1){
+			position =((int)rotorPos[1].charAt(0)-97);
+			if(position==0){
+				position=26;
+			}
+			
+			prevRotorPos=(char)(position+96)+","+prevRotorPos;
+		}
 		else{
-			prevRotorPos=rotorPos[0]+rotorPos[1]+prevRotorPos;
+			prevRotorPos=rotorPos[0]+","+rotorPos[1]+","+prevRotorPos;
 			return prevRotorPos;
 		}
 		
-		//if the middle rotor was at the position after a turnover position then we also rotor the left rotor
 		if(rotorPos[1].charAt(0)==rotors[Integer.parseInt(rotorArray[2])-1].getTurnoverChar()+1){
-			//reduces the left rotor's position by 1
 			position =((int)rotorPos[0].charAt(0)-97);
 			if(position==0){
 				position=26;
 			}
 			
-			prevRotorPos=(char)(position+96)+prevRotorPos;
+			prevRotorPos=(char)(position+96)+","+prevRotorPos;
 		}
-		//else the left rotor didn't rotate
 		else{
-			prevRotorPos=rotorPos[0]+prevRotorPos;
+			prevRotorPos=rotorPos[0]+","+prevRotorPos;
 		}
-		
-		//returns the previous rotor position
 		return prevRotorPos;
 			
 	}
 	
-	//returns how many lettesr of the alphabet are covered by a combination of closures and tails
 	public int numberOfLetters(ArrayList<String> closureStrings, ArrayList<ArrayList<String>> tails){
-		//arraylist to store which letters are not included in the closures and tails
 		ArrayList<String> alphabet = new ArrayList<String>(Arrays.asList("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"));
 		
-		//for each closure remove every letter in it from alphabet
 		for(String closure:closureStrings){
-			//for each letter in the current closure if it is in alphabet then remove it
 			for(int i=0;i<closure.length();i++){
 				if(alphabet.contains(""+closure.charAt(i))){
 					alphabet.remove(""+closure.charAt(i));
@@ -1498,9 +1855,7 @@ public class BombeMachine{
 			}
 		}
 		
-		//for each tail remove every letter in it from alphabet
 		for(ArrayList<String> tail:tails){
-			//for each letter in the current tail if it is in alphabet then remove it
 			for(String letter:tail){
 				if(alphabet.contains(letter)){
 					alphabet.remove(letter);
@@ -1508,74 +1863,209 @@ public class BombeMachine{
 			}
 		}
 		
-		//return the amount of letters covered by the closures and tails
 		return 26-alphabet.size();
 	}
 	
-	//method used to figure out what the starting position of a specific rotor would have to be cause a turnover
-	//after turnoverPos number of rotations
-	public char startPosForTurnover(int rotorNum, int turnoverPos){
-		//get 
-		Rotor currentRotor = rotors[rotorNum-1];	
-		//gets the rotors turnover char
-		char turnoverChar = currentRotor.getTurnoverChar();
+	//run method for the bombe
+	public void run(){
+		String input ="";
+		//System.out.println("Current rotor permutation is: "+permutation);
+		/*ArrayList<String> closures = new ArrayList<String>();
+		closures.add("e,14,n,20");
+		closures.add("l,16,k,6,w,12,a,4");
+		closures.add("o,18,w,24,j,13,y,17");*/
 		
-		//returns the rotor position turnoverPos positions before the turnoverChar position
+		while(!(input.equals("quit"))){
+			//System.out.println("1. rotor permutation settings");
+			//displays the options menu for the user
+			System.out.println("1. input closures");
+			System.out.println("2. edit crib/ciphertext");
+			System.out.println("3. generate closures/tails");
+			System.out.println("4. input reflectors for use in cracking");
+			System.out.println("5. input test encryptions");
+			System.out.println("type quit to exit");
+			
+			//prompts the user for input 
+			input = scanner.nextLine();
+			
+			//dummy if for edit rotor permutation which might be added back 
+			if(input.equals("-1")){
+				//editRotorPermutation();
+			}
+			//else if the user inputted 1 then the user is prompted for the 
+			else if(input.equals("1")){
+				System.out.println("Current rotor permutation is: "+ permutation);
+				ArrayList<String> closures= new ArrayList<String>();
+				
+				//the user inputs closures until they have typed in end
+				while(!input.equals("end")){
+					System.out.println("Input a closure");
+					System.out.println("Type end when you have input all closures.");
+					input = scanner.nextLine().toLowerCase();
+					if(!input.equals("end")){
+						closures.add(input);
+					}
+				}
+				
+				//the enigma is then cracked with the current inputted closures
+				//crackEnigma(closures);
+				
+			}
+			//else if the user inputted 2 then they are taken to crib/cipher menu
+			else if(input.equals("2")){
+				editCribOrCipher();
+			}
+			
+			//else if they inputted 3 then they are taken to automatic generation of closures menu
+			else if(input.equals("3")){
+				generateClosuresAndTails();
+			}
+			//else if they inputted 4 then they are taken to the reflector menu
+			else if(input.equals("4")){
+				setUseableReflectors();
+			}
+			else if(input.equals("5")){
+				bombeTest();
+			}
+		}
+		
+		if(graph!=null){
+			graph.getGraphDrawer().setVisible(false);
+			graph.getGraphDrawer().dispose();
+		}
+	}
+	
+	public char startPosForTurnover(int rotorNum, int turnoverPos){
+		Rotor currentRotor = (Rotor) scrambler.getFirstRotor();
+		
+		for(int i=1; i<rotorNum;i++){
+			currentRotor = (Rotor) currentRotor.getNextRotor();
+		}
+		
+		char turnoverChar = currentRotor.getTurnoverChar();
+		System.out.println(turnoverChar);
 		return (char)((((int)turnoverChar -97 - (turnoverPos-1))%26+26)%26+97);
 	}
 	
-	//method used to find out the ring positions in the starting position is changed, this method assumes that you are using the alphabetic notation for rotor positions
-	//not the numerical
-	public String adjustStartPos(String currentRotorPositions, String currentRingPositions, String newRotorPositions){
+	//main method for the bombe
+	public static void main(String args[]){
+		BombeMachine bombe = new BombeMachine();
 		
-		//gets the current rotor positions, the current ring positions and the new rotor positions
-		String[] positions = currentRotorPositions.toLowerCase().split("");
-		String[] currentRingPos = currentRingPositions.toLowerCase().split(",");
-		String[] newRotorPos = newRotorPositions.toLowerCase().split("");
+		/*HashMap<Character,Character> temp = new HashMap<Character,Character>();
+		temp.put('a','b');
+		temp.put('b','a');
+		temp.put('n','z');
+		temp.put('z','n');
+		//temp.put('o','k');
+		//temp.put('k','o');
+		//temp.put('k','z');
+		//temp.put('z','k');
 		
-		//arraylist to store the shifts
-		ArrayList<Integer> shifts = new ArrayList<Integer>();
+		ArrayList<String> tempTail = new ArrayList<String>();
+		tempTail.add("b");
+		tempTail.add("3");
+		tempTail.add("c");
+		tempTail.add("5");
+		tempTail.add("d");
 		
-		//calculates the shift for each position and stores it in shifts
-		for(int i=0; i<positions.length;i++){
-			//the +26 and mod 26 is to ensure the wrap around, -96 is because ascii for 'a' is 97
-			shifts.add((26+((int)positions[i].charAt(0)-96)-Integer.parseInt(currentRingPos[i]))%26);
-		}
+		ArrayList<String> tempTailTwo = new ArrayList<String>();
+		tempTailTwo.add("a");
+		tempTailTwo.add("4");
+		tempTailTwo.add("f");
+		tempTailTwo.add("1");
+		tempTailTwo.add("m");
 		
-		//calculates the new ring positions
-		String newRingPos = "";
-		for(int i=0; i<shifts.size();i++){
-			//calculates the ring position using the shifts and new rotor positions
-			int temp = (26+(((int)newRotorPos[i].charAt(0)-96)-shifts.get(i))%26)%26;
-			
-			//we have ring positions between 1 and 26, if we wrap down to 0 then we instead set it to 26
-			if(temp ==0){
-				temp =26;
-			}
-			
-			//adds the new ring position to newRingPos
-			newRingPos=newRingPos + temp + ",";
-		}
+		ArrayList<ArrayList<String>> tails = new ArrayList<ArrayList<String>>();
+		tails.add(tempTail);
+		tails.add(tempTailTwo);
 		
-		//gets rid of the last comma in newRingPos and returns it
-		return newRingPos.substring(0, newRingPos.length()-1);
-	}
-	
-	//method used to get what the useable reflectors are
-	public ArrayList<Character> getUsableReflectors(){
-		return useableReflectors;
-	}
-	
-	//method used to set what the useable reflectors are
-	public void setUseableReflectors(ArrayList<Character> reflectors){
-		useableReflectors = reflectors;
-	}
-	
-	public static void main(String[] args){
-		BombeGUI temp = new BombeGUI();
-		BombeMachine bombe = new BombeMachine(temp);
-		System.out.println(bombe.previousRotorPos("b,3,2,1", "bft"));
-		System.out.println(bombe.previousRotorPos("b,3,2,1", "bfs"));
-		System.out.println(bombe.previousRotorPos("b,3,2,1", "aer"));
+		bombe.tailSettings('a',temp,tails);*/
+		
+		/*ArrayList<ArrayList<String>> closures = new ArrayList<ArrayList<String>>();
+		ArrayList<String> tempTail = new ArrayList<String>();
+		tempTail.add("x");
+		tempTail.add("3");
+		tempTail.add("c");
+		tempTail.add("5");
+		tempTail.add("z");
+		tempTail.add("2");
+		
+		ArrayList<String> tempTailFive = new ArrayList<String>();
+		tempTailFive.add("b");
+		tempTailFive.add("2");
+		tempTailFive.add("k");
+		tempTailFive.add("3");
+		
+		ArrayList<String> tempTailSix = new ArrayList<String>();
+		tempTailSix.add("c");
+		tempTailSix.add("4");
+		tempTailSix.add("d");
+		tempTailSix.add("10");
+		
+		ArrayList<String> tempTailTwo = new ArrayList<String>();
+		tempTailTwo.add("a");
+		tempTailTwo.add("4");
+		tempTailTwo.add("f");
+		tempTailTwo.add("1");
+		//tempTailTwo.add("m");
+		
+		ArrayList<String> tempTailThree = new ArrayList<String>();
+		tempTailThree.add("b");
+		tempTailThree.add("7");
+		tempTailThree.add("k");
+		tempTailThree.add("8");
+		tempTailThree.add("d");
+		tempTailThree.add("6");
+		
+		ArrayList<String> tempTailFour = new ArrayList<String>();
+		tempTailFour.add("m");
+		tempTailFour.add("2");
+		tempTailFour.add("n");
+		tempTailFour.add("3");
+		tempTailFour.add("p");
+		tempTailFour.add("6");
+		tempTailFour.add("q");
+		tempTailFour.add("10");
+		
+		closures.add(tempTailFive);
+		closures.add(tempTailSix);
+		closures.add(tempTailTwo);
+		closures.add(tempTailThree);
+		closures.add(tempTailFour);
+		closures.add(tempTail);
+		
+		ArrayList<String> tailOne = new ArrayList<String>();
+		tailOne.add("m");
+		tailOne.add("4");
+		tailOne.add("f");
+		tailOne.add("6");
+		tailOne.add("n");
+		
+		ArrayList<String> tailTwo = new ArrayList<String>();
+		tailTwo.add("d");
+		tailTwo.add("12");
+		tailTwo.add("n");
+		tailTwo.add("4");
+		tailTwo.add("j");
+		
+		ArrayList<ArrayList<String>> tails = new ArrayList<ArrayList<String>>();
+		tails.add(tailOne);
+		tails.add(tailTwo);
+		
+		ArrayList<String> closuresTwo = new ArrayList<String>();
+		closuresTwo.add("a,1,c,10");
+		closuresTwo.add("b,2,f,4,g,5");*/
+		//System.out.println(bombe.numberOfLetters(closuresTwo,tails));
+		//System.out.println(bombe.closureSelector(closures,3));
+		//System.out.println(bombe.alphabetCoverage(closures));
+		
+		//System.out.println(bombe.edgePicker(closuresTwo,tails));
+		//System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
+	//	System.out.println(bombe.adjustStartingPositions("n,l,g","1,1,1","9,25,17"));
+		//bombe.adjustStartingPositions("v,j,w","9,25,17","1,1,1");
+		//System.out.println(bombe.startingRotorPos("b,3,2,1", "b,f,s", 3));
+	//	System.out.println(bombe.previousRotorPos("b,1,2, 3", "a,b,a"));
+		//System.out.println(bombe.startingRotorPos("b,5,1,3", "nmg", 27));
+		bombe.run();
 	}
 }
