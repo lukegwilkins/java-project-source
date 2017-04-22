@@ -393,7 +393,7 @@ public class BombeMachine{
 		}
 		
 		//System.out.println("Hello");
-		//graph = new Graph(menu);
+		graph = new Graph(menu);
 		//System.out.println("hello 2");
 	}
 	
