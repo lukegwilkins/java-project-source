@@ -409,7 +409,7 @@ public class SettingsGUI extends JFrame implements ActionListener{
 	//method for changing the plugboard settings
 	private void changePlugboardSettings(){
 		//splits the settings via "," and makes it into an arraylist
-		String[] swaps = plugboardInput.getText().split(",");
+		String[] swaps = plugboardInput.getText().toLowerCase().replaceAll("\\s+","").split(",");
 		ArrayList<String> mapping = new ArrayList<String>(Arrays.asList(swaps));
 		
 		//sets the plugboard settings

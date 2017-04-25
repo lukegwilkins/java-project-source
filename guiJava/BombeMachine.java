@@ -320,16 +320,6 @@ public class BombeMachine{
 							
 					}
 					
-					/*if(plugboardMapping.containsKey(closureArray[2*i].charAt(0))){
-						if(plugboardMapping.get(closureArray[2*i].charAt(0))!=loop.charAt(i)){
-							validSettings=false;
-						}
-					}
-					else{
-						
-						plugboardMapping.put(closureArray[2*i].charAt(0),loop.charAt(i));
-					}*/
-					
 					//increment i
 					i++;
 				
@@ -397,70 +387,6 @@ public class BombeMachine{
 		//System.out.println("hello 2");
 	}
 	
-	//method for the rotor permutation option, works the same as in the enigma machine
-	public void editRotorPermutation(){
-		String input="";
-		while(!(input.equals("menu"))){
-			System.out.println("1. view permutation");
-			System.out.println("2. edit permutation");
-			System.out.println("Type menu to return to the main menu");
-			
-			input = scanner.nextLine();
-			if(input.equals("1")){
-				
-				System.out.println("The permutation is "+permutation);
-			}
-			else if(input.equals("2")){
-				
-				System.out.println("Input the permutation, e.g. input A, 4, 3, 5 if you want rotor 5 as the right rotor, 3 as the middle, 4 as the left and reflector A as the reflector");
-				
-				input = scanner.nextLine();
-				input = input.replaceAll("\\s+","");
-				String[] stringPositions = input.split(",");
-				
-				if(stringPositions.length !=4){
-					
-					System.out.println("Invalid permutation");					
-				}
-				else{
-					String temp = permutation;
-					
-					try{
-						int rotor = Integer.parseInt(stringPositions[3]);
-						Rotor prevRotor = rotors[rotor-1];
-						Rotor firstRotor = prevRotor;
-						
-						firstRotor.disableDoubleStep();
-						permutation= "" + rotor;
-						
-						for(int i=2; i>0;i--){
-							rotor = Integer.parseInt(stringPositions[i]);
-							prevRotor.setNextRotor(rotors[rotor-1]);
-							prevRotor = rotors[rotor-1];
-							permutation=""+rotor+", "+permutation;
-							prevRotor.disableDoubleStep();
-						}
-						
-						String reflectorString = stringPositions[0];
-						permutation= reflectorString + ", "+ permutation;
-						
-						char reflectorChar = reflectorString.charAt(0);
-						
-						Reflector reflector = reflectors[(int)Character.toLowerCase(reflectorChar) - 97];
-						prevRotor.setNextRotor(reflector);
-						
-						((Rotor)firstRotor.getNextRotor()).enableDoubleStep();
-						scrambler.setFirstRotor(firstRotor);
-					}
-					catch(Exception e){
-						System.out.println("That permutation is invalid");
-						permutation = temp;
-					}
-					
-				}
-			}
-		}
-	}
 	
 	//method for cracking the closures
 	public ArrayList<ArrayList<String>> crackClosures(ArrayList<String> closures, ArrayList<ArrayList<String>> tails, int cribPosition){
@@ -572,15 +498,17 @@ public class BombeMachine{
 						}
 						
 						//if consistentMergedPlugboardSettings is not empty then we output the rotor permutation and positions
-						//and each of the plugboard settigns
+						//and each of the plugboard settings
 						if(!consistentMergedPlugboardSettings.isEmpty()){
 							String outputString;
 							boolean permutationOutputted=false;
 							for(HashMap<Character,Character> plugboardSettings: consistentMergedPlugboardSettings){
 								outputString="";								
 								
+								//we get any extra information using the tails
 								HashMap<Character,Character> settingsWithTails=tailSettings(rotorPositions.charAt(rotorPositions.length()-1),plugboardSettings, tails);
 								if(!(settingsWithTails.isEmpty())){
+									//if tails didn't cause a contradiction then we figure out the starting positions of the rotor
 									rotorPositions = startingRotorPos(permutation, rotorPositions, cribPosition);
 									if(outputToFile){
 										if(!permutationOutputted){
@@ -1060,19 +988,6 @@ public class BombeMachine{
 			if(arr.get(arr.size()-1).equals(arr.get(0))){
 				for(int j=0; j<paths.size();j++){
 					if(j!=i && !((paths.get(j).get(0)).equals(paths.get(j).get(paths.get(j).size()-1)))){
-						/*if(paths.get(j).indexOf(arr.get(0))==paths.get(j).indexOf(arr.get(1))-1){
-		
-							int index=0;
-							while(arr.get(index).equals(paths.get(j).get(index))){
-								index++;
-							}
-							
-							for(int k=0;k<index-1;k++){
-								paths.get(j).remove(0);
-							}
-						}
-						else{*/
-						
 						//check if the path contains at least 2 nodes from the closure i, if it does mark it for removal
 						int noOfClosureNodes=0;
 						int k=0;
@@ -1099,8 +1014,7 @@ public class BombeMachine{
 							paths.set(j,temp);
 							
 							
-						}
-						//}					
+						}				
 					}
 				}
 			}
@@ -1343,7 +1257,7 @@ public class BombeMachine{
 		for(int i=0;i<closures.size();i++){
 			//for each position in the closure check if it is lower or higher than the lowest and highest positions
 			for(int j=1; j<closures.get(i).size(); j+=2){
-				//convert the position to an integers
+				//convert the position to an integer
 				int temp=Integer.parseInt(closures.get(i).get(j));
 				
 				//if the current position is higher than the highest position then replace the highest position
@@ -1426,7 +1340,7 @@ public class BombeMachine{
 			position=26;
 		}
 		
-		//gets the letter version of right rotors previous position
+		//gets the letter of right rotors previous position
 		String prevRotorPos = ""+(char)(position+96);
 		
 		//if the right rotor's previous position is a turnover position then we also rotate the middle rotor back by 1
@@ -1483,7 +1397,7 @@ public class BombeMachine{
 			
 	}
 	
-	//returns how many lettesr of the alphabet are covered by a combination of closures and tails
+	//returns how many letters of the alphabet are covered by a combination of closures and tails
 	public int numberOfLetters(ArrayList<String> closureStrings, ArrayList<ArrayList<String>> tails){
 		//arraylist to store which letters are not included in the closures and tails
 		ArrayList<String> alphabet = new ArrayList<String>(Arrays.asList("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"));
@@ -1515,7 +1429,7 @@ public class BombeMachine{
 	//method used to figure out what the starting position of a specific rotor would have to be cause a turnover
 	//after turnoverPos number of rotations
 	public char startPosForTurnover(int rotorNum, int turnoverPos){
-		//get 
+		//gets which rotor is used
 		Rotor currentRotor = rotors[rotorNum-1];	
 		//gets the rotors turnover char
 		char turnoverChar = currentRotor.getTurnoverChar();

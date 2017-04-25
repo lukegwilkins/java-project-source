@@ -6,12 +6,15 @@ import java.awt.Color;
 
 public class Graph{
 	
+	//declares a GraphDrawer for use in the program
 	private GraphDrawer graphDrawer;
 	
 	public Graph(HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu){
+		//sets up arraylists for nodes and edges
 		ArrayList<Character> nodes = new ArrayList<Character>();
 		ArrayList<String> edges = new ArrayList<String>();
 		
+		//gets what the nodes will be in the graph
 		for(Character charOne: menu.keySet()){
 			nodes.add(charOne);
 			for(Character charTwo: menu.get(charOne).keySet()){
@@ -21,17 +24,8 @@ public class Graph{
 			}
 		}
 		
-		System.out.println(nodes);
-		System.out.println(edges);
-		
-		java.awt.EventQueue.invokeLater(new Runnable(){
-				public void run(){
-					graphDrawer = new GraphDrawer();
-					
-					
-				}
-			}
-		);
+		//creates a new graphDrawer
+		graphDrawer = new GraphDrawer();
 		
 		//wait for graphDrawer to set itself up
 		try {
@@ -40,27 +34,36 @@ public class Graph{
 			Thread.currentThread().interrupt();
 		}
 		
+		//adds each node to the graphDrawer with a white colour
 		for(Character node:nodes){
 			graphDrawer.addNode(Color.white, ("" + node).toUpperCase());
 		}
 		
+		//gets the edges in the graph and adds them
 		for(String edge: edges){
+			//splits the edge up to get the end points
 			String[] points = edge.split(" ");
+			//gets the edge's labels
 			ArrayList<Integer> positions = menu.get(points[0].charAt(0)).get(points[1].charAt(0));
 			
+			//merge the labels into one string
 			String label="";
 			for(Integer position:positions){
 				label=label+position+",";
 			}
 			
+			//remove last ","
 			label=label.substring(0, label.length()-1);
+			//add the edge to the graph
 			graphDrawer.addEdge(Color.lightGray, points[0].toUpperCase(), points[1].toUpperCase(), label);
 		}
 	}
 	
+	//gets the GraphDrawer for the window
 	public GraphDrawer getGraphDrawer(){
 		return graphDrawer;
 	}
+	
 	public static void main(String[] args){
 		HashMap<Character,HashMap<Character,ArrayList<Integer>>> menu = new HashMap<Character,HashMap<Character,ArrayList<Integer>>>();
 		HashMap<Character,ArrayList<Integer>> neighboursOfA = new HashMap<Character,ArrayList<Integer>>();

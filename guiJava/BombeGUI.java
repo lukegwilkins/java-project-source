@@ -307,8 +307,8 @@ public class BombeGUI extends JFrame
 		cribPositionInt = position;
 		
 		//sets the crib and ciphertext in the Bombe
-		bombe.setCrib(crib.getText());
-		bombe.setCipherText(cipherText.getText());
+		bombe.setCrib(crib.getText().toLowerCase());
+		bombe.setCipherText(cipherText.getText().toLowerCase());
 		
 		//gets the closures and tails from the Bombe
 		ArrayList<ArrayList<ArrayList<String>>> closuresAndTails = bombe.generateClosuresAndTails(position);
